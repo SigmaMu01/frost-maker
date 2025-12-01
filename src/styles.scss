@@ -1,1 +1,455 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'fonts';
+@use 'variables' as *;
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  color: var(--color-text-primary);
+  font-family: 'Metrika', 'Arial', serif;
+  vertical-align: baseline;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  // overflow-x: clip;
+  // font-family: Roboto, 'Helvetica Neue', serif;
+  font-family: 'Metrika', 'Arial', serif;
+  font-weight: 400;
+  color: var(--color-text-card);
+  background-color: var(--color-primary);
+  // background-size: cover;
+  // background-position: center;
+  // background-repeat: no-repeat;
+}
+
+h2,
+h3,
+p {
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  &:not([src$='.svg']) {
+    // Apply to all images except for svg icons
+    object-fit: cover;
+    background-size: cover;
+  }
+  // max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  font-style: italic;
+  background-repeat: no-repeat;
+  shape-margin: 0.75rem;
+  text-align: center;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+a {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.link-text {
+  color: var(--color-accent-primary-hover);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease-out;
+
+  &:hover {
+    border-color: var(--color-accent-primary-hover);
+  }
+}
+
+p,
+li {
+  font-size: var(--font-base);
+  line-height: var(--font-height-text);
+}
+
+small {
+  color: var(--color-text-extra);
+  font-size: var(--font-small);
+}
+
+span {
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+
+  tbody,
+  tr {
+    color: inherit;
+  }
+
+  th,
+  td {
+    border: 1px solid var(--color-border);
+    padding: 8px 12px;
+    color: inherit;
+  }
+
+  tr:nth-of-type(even) {
+    background-color: var(--color-secondary);
+  }
+
+  th[scope='col'] {
+    background-color: #505050;
+  }
+
+  th[scope='row'] {
+    background-color: #d6ecd4;
+  }
+}
+
+button,
+label,
+input {
+  font-family: 'Metrika', 'Arial', serif;
+}
+
+input:not([type='checkbox']),
+textarea {
+  margin-bottom: 15px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xsmall);
+  background-color: var(--color-card-input-field);
+  font-size: var(--font-base);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+button {
+  padding: 0.35em 1em;
+  background: transparent;
+  border: none;
+  font-size: var(--font-base);
+  line-height: var(--font-height-text);
+  border-radius: var(--radius-rounded);
+  background-color: var(--color-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, outline 0.1s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: var(--color-accent-primary-hover);
+  }
+
+  &.active {
+    color: var(--color-text-on-accent);
+    background-color: var(--color-accent-primary);
+  }
+}
+
+label {
+  margin-bottom: 5px;
+}
+
+article {
+  padding: 0 0.5rem !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Metrika', 'Arial', serif;
+  font-weight: 400;
+}
+
+ul,
+ol {
+  margin: 0; // Remove browser default top/bottom margins
+  padding-left: 0; // Remove default left indentation
+  list-style-position: outside;
+  font-size: inherit;
+  color: inherit;
+
+  li {
+    position: relative;
+    padding-left: 0.6em;
+    // margin-bottom: 0.4em;
+    margin-left: 1em;
+    font-size: inherit;
+    color: inherit;
+    line-height: var(--font-height-text);
+    text-indent: 0;
+
+    // &::marker {
+    //   color: var(--color-accent-primary);
+    //   font-weight: 600;
+    // }
+  }
+}
+
+.card-main {
+  width: 80%;
+  margin: 0 auto 2rem auto;
+  padding: 1rem 2rem;
+  border-radius: 2rem;
+}
+
+.section-wrapper-main {
+  padding: 2rem 0 1rem 0;
+}
+
+// Overlay for scrub buttons
+.global-overlay-grabbing {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  // background-color: aqua;
+  cursor: grabbing !important;
+  // pointer-events: none;
+  z-index: 1000;
+}
+
+::selection {
+  background-color: var(--color-text-select);
+}
+
+.section-main {
+  margin-top: 18rem;
+  // padding: 0 1rem;
+}
+
+h1,
+.h1 {
+  margin-bottom: 1em;
+}
+
+h2,
+.h2 {
+  font-size: var(--font-h2);
+  line-height: var(--font-height-h2);
+  text-wrap: balance;
+}
+
+h3,
+.h3 {
+  margin-bottom: var(--1x25);
+  font-size: var(--font-h3);
+  line-height: var(--font-height-h2);
+  text-wrap: balance;
+}
+
+h4,
+.h4 {
+  font-size: var(--font-h4);
+  line-height: var(--font-height-h2);
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+
+  &:not(:first-of-type) {
+    margin-top: 3rem;
+  }
+}
+
+h5,
+.h5 {
+  font-size: var(--font-h5);
+  line-height: var(--font-height-h2);
+
+  &:not(:first-of-type) {
+    margin-top: 1.25em;
+  }
+}
+
+.align-center {
+  display: flex;
+  justify-content: center;
+}
+
+.text-align-center {
+  text-align: center;
+}
+
+.text-accent {
+  color: var(--color-accent-primary-hover);
+}
+
+.text-size {
+  font-size: var(--font-description);
+}
+
+.text-color {
+  color: var(--color-text-card);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+// .margin-top {
+//   margin-top: 5rem;
+// }
+
+// .margin-bottom {
+//   margin-bottom: 5rem;
+// }
+
+.container,
+.container-medium,
+.container-large {
+  display: block;
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 1em;
+}
+
+.container-medium {
+  max-width: 1080px;
+}
+
+.container-large {
+  max-width: 1280px;
+}
+
+.button-main {
+  // Also works with <a>
+  padding: 0.35em 1em;
+  border: none;
+  font-size: var(--font-base);
+  line-height: var(--font-height-text);
+  border-radius: var(--radius-rounded);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, outline 0.1s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  display: inline-block;
+  color: var(--color-text-on-accent);
+  background-color: var(--color-accent-primary);
+
+  &:hover {
+    background-color: var(--color-accent-primary-hover);
+  }
+
+  &:active {
+    background-color: var(--color-accent-primary);
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.5em 1em;
+  background-color: var(--color-card-label);
+  border-radius: var(--radius-rounded);
+  font-size: var(--font-tag);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.header {
+  margin-top: 4rem;
+  margin-bottom: 3rem;
+
+  display: flex;
+  flex-direction: column;
+  // justify-content: center;
+  align-items: center;
+}
+
+.heading-h2,
+.heading-left {
+  max-width: var(--width-heading);
+  margin-bottom: 0.5em;
+  text-align: center;
+  font-size: var(--font-h2);
+  line-height: var(--font-height-h2);
+}
+
+.heading-left {
+  max-width: none;
+  margin-bottom: 0.75em;
+  text-align: left;
+  font-size: var(--font-heading);
+}
+
+.description,
+.description-left,
+.paragraph {
+  max-width: var(--width-heading);
+  color: var(--color-text-card);
+  text-align: center;
+  // text-wrap: balance;
+  font-size: var(--font-description);
+  line-height: var(--font-height-text);
+  text-wrap: balance;
+
+  &:not(:last-of-type) {
+    margin-bottom: 1.25em;
+  }
+}
+
+.description-left,
+.paragraph {
+  max-width: none;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.paragraph {
+  margin-bottom: 0.75em;
+  text-wrap: initial;
+}
+
+.heading-underline,
+.heading-overline {
+  display: inline-block;
+  width: 100%;
+  padding-bottom: 1rem;
+}
+.heading-underline {
+  border-bottom: 1px solid var(--color-text-extra);
+}
+.heading-overline {
+  padding-top: 0.2em;
+  border-top: 1px solid var(--color-text-extra);
+}
+
+@media screen and (max-width: 991px) {
+}
+
+@media screen and (max-width: 767px) {
+}
+
+@media screen and (max-width: 479px) {
+  h1.h2 {
+    font-size: var(--font-h2-mobile);
+  }
+}

@@ -1,0 +1,52 @@
+.wrapper {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  right: 0;
+  // border-left: 1px solid #ddd;
+  padding: 1rem 0;
+  border-left: 1px solid var(--color-border);
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    // gap: 0.5rem;
+  }
+
+  .thermal-braid {
+    position: relative;
+    height: 100%;
+    padding: 1rem;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      width: 80px;
+      height: 100%;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--color-border);
+      border-radius: 9999px;
+    }
+
+    input {
+      position: relative;
+      width: 100px;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+  }
+}

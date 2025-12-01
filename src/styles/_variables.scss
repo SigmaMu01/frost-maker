@@ -1,0 +1,91 @@
+$main-panel-blur-strong: blur(5px);
+$main-panel-blur: blur(2px);
+$box-shadow-card: 10px 10px 15px #00000080;
+
+:root {
+  // Color scheme
+  --color-primary: #101011;
+  --color-secondary: #1c1c1e;
+  --color-secondary-accent: color-mix(in srgb, var(--color-secondary) 90%, white);
+  --color-secondary-semi-transparent-85: color-mix(
+    in srgb,
+    var(--color-secondary) 83%,
+    transparent
+  );
+  --color-secondary-semi-transparent-65: color-mix(
+    in srgb,
+    var(--color-secondary) 65%,
+    transparent
+  );
+  --color-accent-primary: white;
+  --color-accent-primary-hover: #b3914f;
+  --color-accent-dark: #b3914f;
+  --color-text-on-accent: black;
+  --color-border: #404040;
+  --color-button: white;
+  --color-button-hover: #b3914f;
+  --color-alert: #e95035;
+  --color-link-hover: color-mix(in srgb, currentColor 15%, transparent);
+  --color-card-label: color-mix(in srgb, currentColor 10%, transparent);
+  --color-card-accent: #70707a;
+
+  --color-card-input-field: #444;
+
+  --color-text-primary: white;
+  --color-text-card: color-mix(in srgb, currentColor 75%, transparent);
+  --color-text-extra: #666;
+  --color-text-small: #333;
+  --color-text-small-accent: #444;
+  --color-text-select: #135763;
+
+  --color-card-border-solid: #cbd2cf;
+
+  --shadow-card-outline: 0 8px 14px 0 rgba(0, 0, 0, 0.15);
+  // 0 0 0 1px rgba(255, 255, 255, 0.2), 0 2px 4px 0 rgba(0, 0, 0, 0.1), 0 8px 14px 0 rgba(0, 0, 0, 0.15);
+  --shadow-text: 2px 2px 3px rgba(0, 0, 0, 0.75);
+
+  // Fonts
+  --font-h2: 2.4rem;
+  --font-h2-mobile: 2rem;
+  --font-h3: 1.8rem;
+  --font-h4: 1.5rem;
+  --font-h5: 1.35rem;
+  --font-h6: 1.15rem;
+  --font-heading: 2rem;
+  --font-strong: 1.2rem;
+  --font-description: 1.15rem;
+  --font-base: 1rem;
+  --font-small: 0.9rem;
+  --font-tag: 0.75rem;
+
+  --font-height-heading: 2;
+  --font-height-text: 1.6;
+  --font-height-list: 1.1;
+  --font-height-h2: 1;
+  --font-height-small: 20px;
+
+  // Spacing
+  --margin-bottom-h2: 0.5em;
+
+  --width-container-max-l: 1280px;
+  --width-container-max: 940px;
+  --width-heading: 600px;
+  --width-heading-big: 700px;
+
+  --padding-container: var(--0x75);
+  --padding-card: var(--2x);
+
+  --gap-large: 32px;
+  --gap-medium: 16px;
+  --gap-small: 8px;
+
+  // Effects
+  --radius-card: 20px;
+  --radius-small: 15px;
+  --radius-xsmall: 12px;
+  --radius-rounded: 9999px;
+  --radius-circle: 50%;
+
+  --blur-strong: blur(5px);
+  --blur-weak: blur(2px);
+}
