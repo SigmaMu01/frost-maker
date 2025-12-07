@@ -1,0 +1,13 @@
+:host {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  // transition: grid-template-columns 0.3s ease-in-out;
+
+  main {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+}

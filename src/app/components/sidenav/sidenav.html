@@ -1,1 +1,12 @@
-<p>sidenav works!</p>
+<aside [class]="isSidenavOpen() ? 'open' : 'collapsed'">
+  <button class="sidenav__toggle" (click)="toggleSidenavState()">
+    {{ isSidenavOpen() ? '\<' : '\>' }}
+  </button>
+
+  <nav>
+    <a class="button"><img src="icons/heart.svg" />Home</a>
+    <a class="button"><img src="icons/heart.svg" />Редактор</a>
+    <app-sidenav-edit [isOpen]="true" />
+    <a class="button"><img src="icons/heart.svg" />Визуализация</a>
+  </nav>
+</aside>

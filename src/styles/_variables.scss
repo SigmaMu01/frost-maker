@@ -17,10 +17,11 @@ $box-shadow-card: 10px 10px 15px #00000080;
     var(--color-secondary) 65%,
     transparent
   );
-  --color-accent-primary: white;
-  --color-accent-primary-hover: #b3914f;
-  --color-accent-dark: #b3914f;
-  --color-text-on-accent: black;
+  // --color-accent-primary: white;
+  // --color-accent-primary-hover: #b3914f;
+  // --color-accent-dark: #b3914f;
+  --color-accent: rgb(145, 219, 233);
+  // --color-text-on-accent: black;
   --color-border: #404040;
   --color-button: white;
   --color-button-hover: #b3914f;
