@@ -151,7 +151,10 @@ button {
   border-radius: var(--radius-rounded);
   background-color: var(--color-secondary);
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, outline 0.1s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    outline 0.1s;
 
   display: flex;
   align-items: center;
@@ -172,7 +175,7 @@ label {
 }
 
 article {
-  padding: 0 0.5rem !important;
+  padding: 0 0.5rem;
 }
 
 h1,
@@ -343,7 +346,10 @@ h5,
   line-height: var(--font-height-text);
   border-radius: var(--radius-rounded);
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, outline 0.1s;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    outline 0.1s;
 
   display: flex;
   align-items: center;

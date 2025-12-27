@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { SvgMapParser } from './svg-map-parser';
+import { MapWorker } from './map-worker';
 
-describe('SvgMapParser', () => {
-  let service: SvgMapParser;
+describe('MapWorker', () => {
+  let service: MapWorker;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(SvgMapParser);
+    service = TestBed.inject(MapWorker);
   });
 
   it('should be created', () => {

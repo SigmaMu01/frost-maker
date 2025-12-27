@@ -1,6 +1,6 @@
 <label>
   <span>Термокоса</span>
-  <span>{{ '48-4' }}</span>
+  <span>{{ selectedTempChainId() ?? '(не выбрана)' }}</span>
 </label>
 <div class="thermal-braid">
   @for (_ of [].constructor(6); track _){

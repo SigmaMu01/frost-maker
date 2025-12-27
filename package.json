@@ -8,18 +8,6 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
-  "prettier": {
-    "printWidth": 100,
-    "singleQuote": true,
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
   "private": true,
   "packageManager": "npm@11.2.0",
   "dependencies": {
@@ -29,15 +17,17 @@
     "@angular/forms": "^21.0.3",
     "@angular/platform-browser": "^21.0.3",
     "@angular/router": "^21.0.3",
+    "fabric": "^6.9.0",
     "rxjs": "~7.8.0",
     "svgson": "^5.3.1",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^21.0.1",
+    "@angular/build": "^21.0.2",
     "@angular/cli": "^21.0.1",
     "@angular/compiler-cli": "^21.0.3",
     "jsdom": "^27.1.0",
+    "prettier": "^3.7.4",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

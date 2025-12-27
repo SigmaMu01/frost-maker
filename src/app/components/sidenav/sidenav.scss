@@ -1,7 +1,8 @@
 aside {
+  --opened-width: 240px;
   --collapsed-width: 40px;
 
-  width: 240px;
+  width: var(--opened-width);
   height: 100%;
   background: #515356;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
@@ -9,6 +10,17 @@ aside {
   flex-direction: column;
   transition: width 0.3s ease;
   overflow-x: hidden;
+
+  .sidenav__toggle {
+    width: 100%;
+    border-radius: 0;
+    aspect-ratio: unset;
+    background-color: var(--color-card-label);
+
+    &:hover {
+      background-color: var(--color-link-hover);
+    }
+  }
 
   &.collapsed {
     width: var(--collapsed-width);

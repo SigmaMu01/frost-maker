@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, effect, signal } from '@angular/core';
+import { MapWorker } from '../../shared/services/map-worker';
 
 @Component({
   selector: 'app-temperature',
@@ -7,5 +8,12 @@ import { Component } from '@angular/core';
   styleUrl: './temperature.scss',
 })
 export class Temperature {
+  selectedTempChainId = signal<any>(null);
 
+  constructor(private mapWorker: MapWorker) {
+    effect(() => {
+      // if (this.mapWorker.selectedTempChainId())
+      this.selectedTempChainId.set(this.mapWorker.selectedTempChainIdLabel());
+    });
+  }
 }

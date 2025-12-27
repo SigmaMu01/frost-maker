@@ -1,12 +1,19 @@
-<aside [class]="isSidenavOpen() ? 'open' : 'collapsed'">
-  <button class="sidenav__toggle" (click)="toggleSidenavState()">
-    {{ isSidenavOpen() ? '\<' : '\>' }}
-  </button>
+<aside [class]="isSidenavOpen() ? 'opened' : 'collapsed'">
+  <button class="sidenav__toggle" (click)="toggleSidenavState()">{{ isSidenavOpen() ? '\<' : '\>' }}</button>
 
   <nav>
-    <a class="button"><img src="icons/heart.svg" />Home</a>
-    <a class="button"><img src="icons/heart.svg" />Редактор</a>
-    <app-sidenav-edit [isOpen]="true" />
-    <a class="button"><img src="icons/heart.svg" />Визуализация</a>
+    <a class="button" routerLink="" (click)="onChangeSelectedSidenavOption('home')">
+      <img src="icons/heart.svg" />
+      Home
+    </a>
+    <a class="button" routerLink="grid" (click)="onChangeSelectedSidenavOption('edit')">
+      <img src="icons/heart.svg" />
+      Редактор
+    </a>
+    <app-sidenav-edit [isSubmenuOpen]="selectedSidenavOption() === 'edit' && isSidenavOpen()" />
+    <a class="button" routerLink="viewport" (click)="onChangeSelectedSidenavOption('view')">
+      <img src="icons/heart.svg" />
+      Визуализация
+    </a>
   </nav>
 </aside>

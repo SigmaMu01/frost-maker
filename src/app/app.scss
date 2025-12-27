@@ -1,10 +1,16 @@
 :host {
-  height: 100vh;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  // transition: grid-template-columns 0.3s ease-in-out;
+  grid-template-columns: auto 1fr 150px;
+  grid-template-rows: 1fr 50px;
+  transition: grid-template-columns 0.2s ease-in-out;
 
   main {
+    min-width: 0; // Keep this to allow
+    min-height: 0; // the grid to shrink properly
+
     display: flex;
     flex-direction: column;
     justify-content: stretch;

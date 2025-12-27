@@ -1,1 +1,4 @@
-<input type="file" (change)="onFileSelected($event)" [accept]="acceptedFileExtensions()" />
+@if (isSubmenuOpen()) {
+<input type="file" appJsonFileReader (data)="dataJSON()" />
+<input type="file" appSvgFileReader />
+}
