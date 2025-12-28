@@ -8,7 +8,7 @@
   </select>
 </div>
 <nav>
-  <button></button>
-  <button></button>
-  <button></button>
+  @for (timeFrameDate of timeFrameDates(); track timeFrameDate) {
+  <button [title]="timeFrameDate" [class.active]="$index === selectedFrame()" (click)="onSelectFrame($index)"></button>
+  }
 </nav>

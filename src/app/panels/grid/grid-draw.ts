@@ -119,7 +119,7 @@ function drawTempChain(
   });
 
   // Preserve SVG identifier for selection reference
-  (group as any).id = id;
+  (group as any).id = idLabel;
 
   canvas.add(group);
 }

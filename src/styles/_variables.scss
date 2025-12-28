@@ -7,16 +7,8 @@ $box-shadow-card: 10px 10px 15px #00000080;
   --color-primary: #101011;
   --color-secondary: #1c1c1e;
   --color-secondary-accent: color-mix(in srgb, var(--color-secondary) 90%, white);
-  --color-secondary-semi-transparent-85: color-mix(
-    in srgb,
-    var(--color-secondary) 83%,
-    transparent
-  );
-  --color-secondary-semi-transparent-65: color-mix(
-    in srgb,
-    var(--color-secondary) 65%,
-    transparent
-  );
+  --color-secondary-semi-transparent-85: color-mix(in srgb, var(--color-secondary) 83%, transparent);
+  --color-secondary-semi-transparent-65: color-mix(in srgb, var(--color-secondary) 65%, transparent);
   // --color-accent-primary: white;
   // --color-accent-primary-hover: #b3914f;
   // --color-accent-dark: #b3914f;
@@ -27,6 +19,7 @@ $box-shadow-card: 10px 10px 15px #00000080;
   --color-button-hover: #b3914f;
   --color-alert: #e95035;
   --color-link-hover: color-mix(in srgb, currentColor 15%, transparent);
+  --color-button-active: #666;
   --color-card-label: color-mix(in srgb, currentColor 10%, transparent);
   --color-card-accent: #70707a;
 

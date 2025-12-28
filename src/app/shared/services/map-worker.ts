@@ -10,13 +10,9 @@ export class MapWorker {
   private canvas!: Canvas; // Canvas pointer for working with objects
 
   private _svgData: INode | null = null; // Current building
-  private readonly _selectedTempChainId = signal<string | null>(null); // Selected temperature chain
 
-  isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
-
-  selectedTempChainIdLabel = computed((id = this._selectedTempChainId()) => {
-    return id ? id.substring(id.lastIndexOf('_') + 1) : null;
-  });
+  readonly selectedTempChainId = signal<string | null>(null); // Selected temperature chain
+  readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
 
   setSVGTemplate(template: INode) {
     if (isValidSVG(template)) {
@@ -38,10 +34,10 @@ export class MapWorker {
   }
 
   setSelectedObjectId(id: string) {
-    this._selectedTempChainId.set(id);
+    this.selectedTempChainId.set(id);
   }
 
   clearSelection() {
-    this._selectedTempChainId.set(null);
+    this.selectedTempChainId.set(null);
   }
 }

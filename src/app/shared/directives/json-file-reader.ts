@@ -2,7 +2,8 @@ import { Directive } from '@angular/core';
 import { isDevMode, output } from '@angular/core';
 
 import { BasicFileReader } from '../models/file-reader';
-import { INode } from 'svgson';
+import { DataConnector } from '../services/data-connector';
+import { MonitoringDataJSON } from '../../core/models/temp-json';
 
 @Directive({
   selector: '[appJsonFileReader]',
@@ -12,7 +13,9 @@ import { INode } from 'svgson';
   },
 })
 export class JsonFileReader implements BasicFileReader {
-  readonly data = output<INode>();
+  // readonly data = output<INode>();
+
+  constructor(private dataConnector: DataConnector) {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -22,14 +25,16 @@ export class JsonFileReader implements BasicFileReader {
 
       reader.onload = (e: any) => {
         try {
-          const dataJSON = JSON.parse(e.target.result as string) as INode;
+          const dataJSON = JSON.parse(e.target.result as string) as MonitoringDataJSON;
 
-          this.data.emit(dataJSON);
+          this.dataConnector.setTemperatureTemplate(dataJSON);
 
           if (isDevMode()) console.log('Parsed JSON:', dataJSON);
         } catch (error) {
           console.error('Error parsing JSON:', error);
         }
+
+        this.dataConnector.isJSONLoaded.set(true);
       };
       reader.onerror = (error) => {
         console.error('Error reading file:', error);

@@ -1,9 +1,10 @@
 <label>
   <span>Термокоса</span>
-  <span>{{ selectedTempChainId() ?? '(не выбрана)' }}</span>
+  <span>{{ selectedTempChainId() ?? 'не выбрана' }}</span>
 </label>
 <div class="thermal-braid">
-  @for (_ of [].constructor(6); track _){
-  <input />
-  }
+  @if (selectedTempChainId() && getTempChainFrame()) { @for (tuple of getTempChainFrame(); track tuple[0]){
+  <label [for]="`temp-val-${$index}`">{{ tuple[0] }}</label>
+  <input [name]="`temp-val-${$index}`" [value]="tuple[1]" />
+  } }
 </div>
