@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, isDevMode, signal } from '@angular/core';
 import { cleanMonitoringData, DataFrame, MonitoringDataJSON, TempDataJSON } from '../../core/models/temp-json';
 
 @Injectable({
@@ -14,6 +14,7 @@ export class DataConnector {
 
   setTemperatureTemplate(template: MonitoringDataJSON) {
     this._tempData = cleanMonitoringData(template);
+    if (isDevMode()) console.log('Cleaned JSON:', this._tempData);
   }
 
   setCurrentFrame(index: number) {

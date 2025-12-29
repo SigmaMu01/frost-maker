@@ -15,6 +15,12 @@ export class Temperature {
 
   getTempChainFrame = computed(() => Object.entries(this.selectedTempChainFrame()));
 
+  tempOffsetY(label: string) {
+    // 100% divided by max depth
+    const maxDepth = 12;
+    return (100 / maxDepth) * Number(label);
+  }
+
   constructor(
     private mapWorker: MapWorker,
     private dataConnector: DataConnector

@@ -21,11 +21,13 @@ export function cleanMonitoringData(input: MonitoringDataJSON): TempDataJSON {
     const values = row.slice(1) as (number | null)[];
 
     // Split "23-1 (5)" into "23-1" and "5"
-    const match = label.match(/^(.+?) \((\d+)\)$/);
-    if (!match) continue;
+    const match = label.match(/^(.+?) \(([+-]?[0-9]*[.,]?[0-9]+)\)$/);
+    if (!match) {
+      continue;
+    }
 
     const tempChainId = match[1];
-    const tempChainDepth = Number(match[2]);
+    const tempChainDepth = Number(`${match[2]}`.replace(',', '.')); // Replace Russian comma decimal separator
 
     if (!outputValues[tempChainId]) {
       outputValues[tempChainId] = {};

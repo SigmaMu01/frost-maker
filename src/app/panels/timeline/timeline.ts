@@ -12,11 +12,13 @@ export class Timeline {
   readonly selectedFrame = signal<number>(0);
 
   constructor(private dataConnector: DataConnector) {
+    // Load all available dates from dataset
     effect(() => {
       if (this.dataConnector.isJSONLoaded()) {
         this.timeFrameDates.set(this.dataConnector.getTimeFrameDates());
       }
     });
+    // Update selected frame on the timeline
     effect(() => {
       this.selectedFrame.set(this.dataConnector.selectedFrame());
     });

@@ -29,7 +29,7 @@ export class JsonFileReader implements BasicFileReader {
 
           this.dataConnector.setTemperatureTemplate(dataJSON);
 
-          if (isDevMode()) console.log('Parsed JSON:', dataJSON);
+          // if (isDevMode()) console.log('Parsed JSON:', dataJSON);
         } catch (error) {
           console.error('Error parsing JSON:', error);
         }
