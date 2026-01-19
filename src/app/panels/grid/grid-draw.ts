@@ -50,7 +50,8 @@ function drawTempChain(
   node: INode,
   id: string,
   stroke?: { width?: number; color?: string },
-  fillColor?: string
+  fillColor?: string,
+  selectable?: boolean
 ) {
   const attrs = node.attributes || {};
 
@@ -68,7 +69,7 @@ function drawTempChain(
     strokeWidth: stroke?.width ?? (attrs['stroke-width'] ? parseFloat(attrs['stroke-width']) : 1),
     originX: 'center',
     originY: 'center',
-    selectable: true,
+    selectable: false,
   });
 
   // X Mark (2 intersecting lines)
@@ -84,9 +85,9 @@ function drawTempChain(
   const xLine2 = new Line([-r * 0.7, r * 0.7, r * 0.7, -r * 0.7], lineParams);
 
   // Label
-  const idLabel = id.substring(id.lastIndexOf('_') + 1);
+  // const idLabel = id.substring(id.lastIndexOf('_') + 1);
 
-  const label = new FabricText(idLabel, {
+  const label = new FabricText(id, {
     top: r + 10, // below circle
     originX: 'center',
     originY: 'top',
@@ -105,7 +106,7 @@ function drawTempChain(
     subTargetCheck: true,
 
     // Selection allowed
-    selectable: true,
+    selectable: selectable ?? true,
     evented: true,
 
     // Prevent transformations
@@ -119,7 +120,7 @@ function drawTempChain(
   });
 
   // Preserve SVG identifier for selection reference
-  (group as any).id = idLabel;
+  (group as any).id = id;
 
   canvas.add(group);
 }
@@ -151,5 +152,11 @@ export function drawSupports(canvas: Canvas, node: INode) {
 export function drawTempChains(canvas: Canvas, node: INode, id: string) {
   node.children.forEach((childNode) => {
     drawTempChain(canvas, childNode, id, { color: 'red', width: 2 });
+  });
+}
+
+export function drawEmptyTempChains(canvas: Canvas, node: INode, id: string) {
+  node.children.forEach((childNode) => {
+    drawTempChain(canvas, childNode, id, { color: 'grey', width: 2 }, undefined, false);
   });
 }

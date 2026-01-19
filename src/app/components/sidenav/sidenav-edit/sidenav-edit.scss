@@ -1,0 +1,17 @@
+.wrapper {
+  width: 100%;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .panel {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+
+    input[type='number'] {
+      width: 100%;
+    }
+  }
+}

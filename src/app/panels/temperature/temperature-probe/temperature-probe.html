@@ -1,0 +1,6 @@
+@if (isProbeVisible()) {
+<div class="probe" [style.top.px]="probe().y">
+  <div>Глубина: {{ probe().depth | number:'1.2-2' }} m</div>
+  <div>Температура: {{ probe().temp | number:'1.2-2' }} °C</div>
+</div>
+}

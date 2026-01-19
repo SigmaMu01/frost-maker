@@ -2,8 +2,14 @@
   <span>Термокоса</span>
   <span>{{ selectedTempChainId() ?? 'не выбрана' }}</span>
 </label>
-<div class="thermal-braid" [class.has-values]="selectedTempChainId()">
-  <div class="values">
+<div
+  class="thermal-braid"
+  [class.has-values]="selectedTempChainId()"
+  [style.--gradient]="tempBorder()"
+  (mousemove)="onMouseMove($event)"
+  (mouseleave)="hideProbe()"
+>
+  <div #thermalBraid class="values">
     @if (selectedTempChainId() && getTempChainFrame()) { @for (tuple of getTempChainFrame(); track tuple[0]){
     <div [style.top.%]="tempOffsetY(tuple[0])">
       <label [for]="`temp-val-${$index}`">{{ tuple[0] }}м</label>
@@ -11,4 +17,5 @@
     </div>
     } }
   </div>
+  <app-temperature-probe [isProbeVisible]="isProbeVisible()" [probe]="probeCont()" />
 </div>

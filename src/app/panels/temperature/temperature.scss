@@ -17,6 +17,8 @@
   }
 
   .thermal-braid {
+    --border-size: 2px;
+
     position: relative;
     height: 100%;
     padding: 2rem 0;
@@ -26,10 +28,39 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    border: 1px solid var(--color-border);
     border-radius: 20px;
-
     transition: left 0.15s ease-in-out;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--gradient);
+      padding: var(--border-size);
+      z-index: 3;
+
+      // Mask center hole
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+
+      pointer-events: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: var(--border-size) solid var(--color-border);
+      z-index: 2;
+    }
 
     &.has-values {
       left: 60%;
@@ -44,6 +75,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      z-index: 1;
 
       & > div {
         position: absolute;
@@ -55,7 +87,7 @@
           display: block;
           position: absolute;
           width: 5px;
-          height: 1px;
+          height: var(--border-size);
           top: 50%;
           transform: translateX(-100%);
           background-color: var(--color-border);

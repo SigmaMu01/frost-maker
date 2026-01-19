@@ -1,0 +1,17 @@
+.probe {
+  position: absolute;
+  right: 100%;
+  // transform: translateX(-100%);
+
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+
+  // font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  pointer-events: none;
+  transform: translateY(-50%);
+
+  white-space: nowrap;
+}

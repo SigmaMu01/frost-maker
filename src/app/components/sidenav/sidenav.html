@@ -3,16 +3,16 @@
 
   <nav>
     <a class="button" routerLink="" (click)="onChangeSelectedSidenavOption('home')">
-      <img src="icons/heart.svg" />
-      Home
+      <img src="icons/info.svg" />
+      Справка
     </a>
     <a class="button" routerLink="grid" (click)="onChangeSelectedSidenavOption('edit')">
-      <img src="icons/heart.svg" />
-      Редактор
+      <img src="icons/grid.svg" />
+      Сетка
     </a>
     <app-sidenav-edit [isSubmenuOpen]="selectedSidenavOption() === 'edit' && isSidenavOpen()" />
     <a class="button" routerLink="viewport" (click)="onChangeSelectedSidenavOption('view')">
-      <img src="icons/heart.svg" />
+      <img src="icons/viewport.svg" />
       Визуализация
     </a>
   </nav>

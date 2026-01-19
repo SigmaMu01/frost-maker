@@ -5,10 +5,10 @@ export interface MonitoringDataJSON {
 
 export interface TempDataJSON {
   utcTimestamp: string[];
-  temperatureValue: Record<string, Record<number, Array<number | null>>>;
+  temperatureValue: Record<string, Record<string, Array<number | null>>>;
 }
 
-export type DataFrame = Record<number, number | null>;
+export type DataFrame = Record<string, number | null>;
 
 export function cleanMonitoringData(input: MonitoringDataJSON): TempDataJSON {
   const outputValues: Record<string, Record<number, (number | null)[]>> = {};

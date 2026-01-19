@@ -16,6 +16,8 @@ export class Timeline {
     effect(() => {
       if (this.dataConnector.isJSONLoaded()) {
         this.timeFrameDates.set(this.dataConnector.getTimeFrameDates());
+      } else {
+        this.timeFrameDates.set([]);
       }
     });
     // Update selected frame on the timeline

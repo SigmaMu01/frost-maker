@@ -24,6 +24,7 @@ export class JsonFileReader implements BasicFileReader {
       const reader = new FileReader();
 
       reader.onload = (e: any) => {
+        this.dataConnector.isJSONLoaded.set(false);
         try {
           const dataJSON = JSON.parse(e.target.result as string) as MonitoringDataJSON;
 

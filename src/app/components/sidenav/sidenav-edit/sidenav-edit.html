@@ -1,4 +1,19 @@
 @if (isSubmenuOpen()) {
-<input type="file" appJsonFileReader />
-<input type="file" appSvgFileReader />
+<div class="wrapper">
+  <input #json type="file" appJsonFileReader />
+  <input #svg type="file" appSvgFileReader />
+  <button (click)="clearCanvas()">Очистить канву</button>
+  <div class="panel">
+    <div>
+      <label for="minTempInput">Min</label>
+      <input name="minTempInput" type="number" [(ngModel)]="minTemp" />
+    </div>
+    <div>
+      <label for="maxTempInput">Max</label>
+      <input type="number" [(ngModel)]="maxTemp" />
+    </div>
+  </div>
+  <button (click)="saveJSON()">Сохранить JSON</button>
+  <!-- <button (click)="saveSVG()">Сохранить SVG</button> -->
+</div>
 }

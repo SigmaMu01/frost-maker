@@ -1,5 +1,10 @@
-import { Injectable, isDevMode, signal } from '@angular/core';
-import { cleanMonitoringData, DataFrame, MonitoringDataJSON, TempDataJSON } from '../../core/models/temp-json';
+import { computed, Injectable, isDevMode, signal } from '@angular/core';
+import {
+  cleanMonitoringData,
+  type DataFrame,
+  type MonitoringDataJSON,
+  type TempDataJSON,
+} from '../../core/models/temp-json';
 
 @Injectable({
   providedIn: 'root',
@@ -12,9 +17,16 @@ export class DataConnector {
 
   readonly isJSONLoaded = signal(false); // Signal to the timeline that it can draw frames
 
+  readonly getAllData = computed(() => this._tempData);
+
   setTemperatureTemplate(template: MonitoringDataJSON) {
     this._tempData = cleanMonitoringData(template);
     if (isDevMode()) console.log('Cleaned JSON:', this._tempData);
+  }
+
+  clearTemperatureTemplate() {
+    this._tempData = {} as TempDataJSON;
+    this.isJSONLoaded.set(false);
   }
 
   setCurrentFrame(index: number) {
@@ -26,12 +38,23 @@ export class DataConnector {
     return this._tempData.utcTimestamp;
   }
 
+  checkTempChainData(tempChainId: string) {
+    return this._tempData.temperatureValue[tempChainId] ? true : false;
+  }
+
   getTempChainData(tempChainId: string) {
     const output: DataFrame = {};
 
     const data = this._tempData.temperatureValue[tempChainId];
+
+    // If selected temp chain has no data
+    // if (!data) {
+    //   return null;
+    // }
+
+    console.log(data);
     Object.keys(data).forEach((key) => {
-      output[Number(key)] = data[Number(key)][this.selectedFrame()] ?? null;
+      output[key] = data[key][this.selectedFrame()] ?? null;
     });
     return output;
   }

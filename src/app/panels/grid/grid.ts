@@ -3,7 +3,8 @@ import { AfterViewInit, Component, effect, ElementRef, HostListener, viewChild, 
 // import * as fabric from 'fabric'; // To-Do: remove this in favor of minimal import like below:
 import { Canvas, Point, Line, TPointerEventInfo, TPointerEvent, TEvent, FabricObject } from 'fabric';
 import { MapWorker } from '../../shared/services/map-worker';
-import { drawBuilding, drawSupports, drawTempChains } from './grid-draw';
+import { drawBuilding, drawEmptyTempChains, drawSupports, drawTempChains } from './grid-draw';
+import { DataConnector } from '../../shared/services/data-connector';
 
 interface FabricObjectWithID extends FabricObject {
   id?: string;
@@ -26,9 +27,12 @@ export class Grid implements AfterViewInit {
   private lastPosX = 0;
   private lastPosY = 0;
 
-  constructor(private mapWorker: MapWorker) {
+  constructor(
+    private mapWorker: MapWorker,
+    private dataConnector: DataConnector // Required to check if temp chain has data
+  ) {
     effect(() => {
-      if (this.mapWorker.isSVGLoaded()) {
+      if (this.mapWorker.isSVGLoaded() && this.dataConnector.isJSONLoaded()) {
         this.drawSVG();
       }
     });
@@ -43,9 +47,8 @@ export class Grid implements AfterViewInit {
     this.initCanvas();
     this.mapWorker.registerCanvas(this.canvas);
     this.resizeCanvas();
-    this.drawGrid();
-
-    // this.drawSVG();
+    // this.drawGrid();
+    this.mapWorker.clearCanvas();
   }
 
   // ----------------------
@@ -83,36 +86,11 @@ export class Grid implements AfterViewInit {
     this.canvas.requestRenderAll();
   }
 
-  // ----------------------
-  // Grid (100px mesh)
-  // ----------------------
-  private drawGrid() {
-    const gridSize = 100;
-    const extent = 5000; // virtual world size
-
-    for (let i = -extent; i <= extent; i += gridSize) {
-      // vertical
-      this.canvas.add(
-        new Line([i, -extent, i, extent], {
-          stroke: '#ddd',
-          selectable: false,
-          evented: false,
-        })
-      );
-      // horizontal
-      this.canvas.add(
-        new Line([-extent, i, extent, i], {
-          stroke: '#ddd',
-          selectable: false,
-          evented: false,
-        })
-      );
-    }
-
-    // this.canvas.getObjects().forEach(obj => obj.sendToBack());
-  }
-
   private drawSVG() {
+    // this.canvas.clear();
+    // this.drawGrid();
+    this.mapWorker.clearCanvas;
+
     const children = this.mapWorker.getSVGChildren();
 
     children.forEach((node) => {
@@ -129,7 +107,12 @@ export class Grid implements AfterViewInit {
 
         default:
           if (id.startsWith('_x5F_')) {
-            drawTempChains(this.canvas, node, id);
+            const idLabel = id.substring(id.lastIndexOf('_') + 1);
+            if (this.dataConnector.checkTempChainData(idLabel)) {
+              drawTempChains(this.canvas, node, idLabel);
+            } else {
+              drawEmptyTempChains(this.canvas, node, idLabel);
+            }
           }
       }
     });
@@ -197,6 +180,7 @@ export class Grid implements AfterViewInit {
   private onSelection(e: Partial<TEvent<TPointerEvent>> & { selected?: FabricObjectWithID[] }) {
     const selected = e.selected?.[0];
     if (!selected?.id) return;
+    // if (!this.dataConnector.checkTempChainData(selected.id)) return;
 
     // Save current selected temperature chain to service
     this.mapWorker.setSelectedObjectId(selected!.id!);
