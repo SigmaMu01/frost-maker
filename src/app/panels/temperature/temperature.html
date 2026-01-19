@@ -15,6 +15,8 @@
       <label [for]="`temp-val-${$index}`">{{ tuple[0] }}м</label>
       <input [name]="`temp-val-${$index}`" [value]="tuple[1]" />
     </div>
+    } @for (probe of zeroProbes(); track probe.depth) {
+    <div class="zero-probe" [style.top.%]="tempOffsetY(probe.depth)"></div>
     } }
   </div>
   <app-temperature-probe [isProbeVisible]="isProbeVisible()" [probe]="probeCont()" />

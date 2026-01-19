@@ -80,9 +80,9 @@
       & > div {
         position: absolute;
         display: flex;
-        transform: translateY(-50%);
+        transform: translateY(calc(-50% - 1px));
 
-        &::before {
+        &:not(.zero-probe):before {
           content: '';
           display: block;
           position: absolute;
@@ -114,6 +114,15 @@
           font-size: 0.9rem;
           text-align: right;
         }
+      }
+
+      .zero-probe {
+        position: absolute;
+
+        width: 100%;
+        height: 2px;
+        background-color: aquamarine;
+        z-index: 5;
       }
     }
   }

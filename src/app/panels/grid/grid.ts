@@ -89,7 +89,7 @@ export class Grid implements AfterViewInit {
   private drawSVG() {
     // this.canvas.clear();
     // this.drawGrid();
-    this.mapWorker.clearCanvas;
+    this.mapWorker.clearCanvas();
 
     const children = this.mapWorker.getSVGChildren();
 

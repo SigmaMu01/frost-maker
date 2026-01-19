@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { INode } from 'svgson';
 import { isValidSVG } from '../../core/models/building';
 import { Canvas, Group, Line } from 'fabric';
+import { TempProbe } from '../../core/models/probe';
 
 @Injectable({
   providedIn: 'root',
@@ -79,15 +80,8 @@ export class MapWorker {
   // Temperature worker
   // -------------------------
 
-  depthReadings = [
-    { depth: 0, temp: 28 },
-    { depth: 3, temp: 22 },
-    { depth: 6, temp: 17 },
-    { depth: 9, temp: 12 },
-    { depth: 12, temp: 7 },
-  ];
-  interpolateTemp(depth: number) {
-    const arr = this.depthReadings;
+  interpolateTemp(probes: TempProbe[], depth: number) {
+    const arr = probes;
 
     for (let i = 0; i < arr.length - 1; i++) {
       const a = arr[i];
@@ -101,5 +95,37 @@ export class MapWorker {
     }
 
     return arr[arr.length - 1].temp;
+  }
+
+  findZeroCrossings(probes: TempProbe[]): TempProbe[] {
+    const result: TempProbe[] = [];
+
+    if (probes.length < 2) return result;
+
+    for (let i = 0; i < probes.length - 1; i++) {
+      const a = probes[i];
+      const b = probes[i + 1];
+
+      // Case 1: exact zero measurement
+      if (a.temp === 0) {
+        result.push({ depth: a.depth, temp: 0 });
+        continue;
+      }
+
+      // Case 2: sign change => crossing
+      if ((a.temp > 0 && b.temp < 0) || (a.temp < 0 && b.temp > 0)) {
+        const t = (0 - a.temp) / (b.temp - a.temp);
+
+        const depth = a.depth + t * (b.depth - a.depth);
+
+        result.push({
+          depth,
+          temp: 0,
+        });
+      }
+    }
+
+    console.log('Found zeroes: ', result);
+    return result;
   }
 }

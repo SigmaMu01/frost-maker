@@ -29,6 +29,7 @@ export class Temperature {
 
   readonly probes = signal<TempProbe[]>([]); // Convenient thermal chain structure for further vizualization
   readonly probeCont = signal<TempProbeCont>({} as TempProbeCont); // Bus payload to child info panel component
+  readonly zeroProbes = signal<TempProbe[]>([]); // Zero temp thresholds
   readonly isProbeVisible = signal(false); // Is floating window with interpolated values visible
 
   thermalBraidRef = viewChild<ElementRef<HTMLElement>>('thermalBraid');
@@ -44,10 +45,28 @@ export class Temperature {
       // Update if svg map is loaded
       this.selectedTempChainId.set(this.mapWorker.selectedTempChainId());
 
-      // Then update is dataset is loaded
+      // Then update if dataset is loaded
       if (this.selectedTempChainId()) {
         this.selectedTempChainFrame.set(this.dataConnector.getTempChainData(this.selectedTempChainId()!));
       }
+    });
+
+    effect(() => {
+      const id = this.mapWorker.selectedTempChainId();
+      this.selectedTempChainId.set(id);
+
+      if (!id) {
+        this.selectedTempChainFrame.set({});
+        this.probes.set([]);
+        return;
+      }
+
+      const frame = this.dataConnector.getTempChainData(id);
+
+      this.selectedTempChainFrame.set(frame);
+
+      // Build probes immediately after frame update
+      this.rebuildProbes();
     });
 
     // this.tempBorder.set(this.buildGradient(temperatureStops));
@@ -60,24 +79,21 @@ export class Temperature {
   }
 
   buildGradientFromChainFrame() {
-    const frame = this.getTempChainFrame();
+    // const frame = this.getTempChainFrame();
 
-    // Flatten records into array
-    const points = frame
-      .map((obj) => {
-        const depth = Number(obj[0]);
-        const temp = obj[1];
+    // // Flatten records into array
+    // const points = frame
+    //   .map((obj) => {
+    //     const depth = Number(obj[0]);
+    //     const temp = obj[1];
 
-        return { depth, temp };
-      })
-      .filter((p) => p.temp !== null) as TempProbe[];
+    //     return { depth, temp };
+    //   })
+    //   .filter((p) => p.temp !== null) as TempProbe[];
 
-    // if (points.length < 2) {
-    //   return '';
-    // }
+    // this.probes.set(points);
 
-    // console.log(points);
-    this.probes.set(points);
+    const points = this.probes();
     const stops = points.map((p) => {
       const percent = this.tempOffsetY(p.depth);
       const color = tempToColor(p.temp, this.mapWorker.minTemp(), this.mapWorker.maxTemp());
@@ -85,13 +101,35 @@ export class Temperature {
       return `${color} ${percent.toFixed(2)}%`;
     });
 
-    // console.log(stops);
     return `linear-gradient(to bottom, ${stops.join(', ')})`;
   }
 
   // --------------------
   // Probe control
   // --------------------
+  private rebuildProbes() {
+    const frame = this.getTempChainFrame();
+
+    if (!frame?.length) {
+      this.probes.set([]);
+      return;
+    }
+
+    const points = frame
+      .map(([depth, temp]) => ({
+        depth: Number(depth),
+        temp,
+      }))
+      .filter((p) => p.temp !== null)
+      .sort((a, b) => a.depth - b.depth) as TempProbe[];
+
+    this.probes.set(points);
+
+    // Find zero temperature thresholds
+    const zeroes = this.mapWorker.findZeroCrossings(points);
+    this.zeroProbes.set(zeroes);
+  }
+
   hideProbe() {
     this.isProbeVisible.set(false);
   }
@@ -115,7 +153,7 @@ export class Temperature {
     this.probeCont.update((probe) => ({ ...probe, depth: percent * this.maxDepth }));
 
     // Temperature interpolation
-    this.probeCont.update((probe) => ({ ...probe, temp: this.mapWorker.interpolateTemp(probe.depth) }));
+    this.probeCont.update((probe) => ({ ...probe, temp: this.mapWorker.interpolateTemp(this.probes(), probe.depth) }));
 
     // Tooltip positioning
     this.probeCont.update((probe) => ({ ...probe, y: clampedY }));
