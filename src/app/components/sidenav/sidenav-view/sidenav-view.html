@@ -1,0 +1,10 @@
+@if (isSubmenuOpen()) {
+<div class="wrapper">
+  <div class="panel">
+    <div>
+      <label for="floorNum">Кол-во этажей</label>
+      <input name="floorNum" type="number" min="1" max="99" [(ngModel)]="floorNum" />
+    </div>
+  </div>
+</div>
+}

@@ -3,6 +3,7 @@ import { INode } from 'svgson';
 import { isValidSVG } from '../../core/models/building';
 import { Canvas, Group, Line } from 'fabric';
 import { TempProbe } from '../../core/models/probe';
+import * as THREE from 'three';
 
 @Injectable({
   providedIn: 'root',
@@ -127,5 +128,9 @@ export class MapWorker {
 
     console.log('Found zeroes: ', result);
     return result;
+  }
+
+  getOutlineNode(): INode | null {
+    return this._svgData?.children.find((c) => c.attributes?.['id'] === 'outline') ?? null;
   }
 }

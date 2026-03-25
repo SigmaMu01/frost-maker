@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --host 0.0.0.0",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -20,12 +20,15 @@
     "fabric": "^6.9.0",
     "rxjs": "~7.8.0",
     "svgson": "^5.3.1",
+    "three": "^0.183.2",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular/build": "^21.0.2",
     "@angular/cli": "^21.0.1",
     "@angular/compiler-cli": "^21.0.3",
+    "@types/three": "^0.183.1",
+    "baseline-browser-mapping": "^2.10.0",
     "jsdom": "^27.1.0",
     "prettier": "^3.7.4",
     "typescript": "~5.9.2",

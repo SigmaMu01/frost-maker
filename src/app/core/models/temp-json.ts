@@ -1,9 +1,11 @@
 export interface MonitoringDataJSON {
+  // Raw json temperature data from the site
   utcTimestamp: string[];
   temperatureValue: [label: string, ...values: (number | null)[]][];
 }
 
 export interface TempDataJSON {
+  // Cleaned temperature data
   utcTimestamp: string[];
   temperatureValue: Record<string, Record<string, Array<number | null>>>;
 }
@@ -11,6 +13,7 @@ export interface TempDataJSON {
 export type DataFrame = Record<string, number | null>;
 
 export function cleanMonitoringData(input: MonitoringDataJSON): TempDataJSON {
+  // Clean temperature data for easier work
   const outputValues: Record<string, Record<number, (number | null)[]>> = {};
   for (const row of input.temperatureValue) {
     if (!row) {
