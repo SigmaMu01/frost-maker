@@ -39,7 +39,7 @@ export class DataConnector {
   }
 
   checkTempChainData(tempChainId: string) {
-    return this._tempData.temperatureValue[tempChainId] ? true : false;
+    return this._tempData.temperatureValue[tempChainId] ? true : false; // True is there is data provided for temp chain id
   }
 
   getTempChainData(tempChainId: string) {

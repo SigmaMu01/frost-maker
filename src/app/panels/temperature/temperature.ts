@@ -1,9 +1,10 @@
-import { Component, computed, effect, ElementRef, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { MapWorker } from '../../shared/services/map-worker';
 import { DataConnector } from '../../shared/services/data-connector';
 import { DataFrame } from '../../core/models/temp-json';
 import { TemperatureProbe } from './temperature-probe/temperature-probe';
 import { TempProbe, TempProbeCont } from '../../core/models/probe';
+import { TemperatureControl } from '../../shared/services/temperature-control';
 
 function tempToColor(temp: number, minTemp?: number | null, maxTemp?: number | null) {
   const min = minTemp ?? 0;
@@ -24,6 +25,10 @@ function tempToColor(temp: number, minTemp?: number | null, maxTemp?: number | n
   styleUrl: './temperature.scss',
 })
 export class Temperature {
+  private mapWorker = inject(MapWorker);
+  private dataConnector = inject(DataConnector);
+  private temperatureControl = inject(TemperatureControl);
+
   readonly selectedTempChainId = signal<string | null>(null);
   readonly selectedTempChainFrame = signal<DataFrame>({});
 
@@ -37,10 +42,7 @@ export class Temperature {
   getTempChainFrame = computed(() => Object.entries(this.selectedTempChainFrame())); // Entire time frame for a single temp chain
   tempBorder = computed(() => (this.selectedTempChainId() ? this.buildGradientFromChainFrame() : 'transparent'));
 
-  constructor(
-    private mapWorker: MapWorker,
-    private dataConnector: DataConnector
-  ) {
+  constructor() {
     effect(() => {
       // Update if svg map is loaded
       this.selectedTempChainId.set(this.mapWorker.selectedTempChainId());
@@ -79,20 +81,6 @@ export class Temperature {
   }
 
   buildGradientFromChainFrame() {
-    // const frame = this.getTempChainFrame();
-
-    // // Flatten records into array
-    // const points = frame
-    //   .map((obj) => {
-    //     const depth = Number(obj[0]);
-    //     const temp = obj[1];
-
-    //     return { depth, temp };
-    //   })
-    //   .filter((p) => p.temp !== null) as TempProbe[];
-
-    // this.probes.set(points);
-
     const points = this.probes();
     const stops = points.map((p) => {
       const percent = this.tempOffsetY(p.depth);
@@ -126,7 +114,7 @@ export class Temperature {
     this.probes.set(points);
 
     // Find zero temperature thresholds
-    const zeroes = this.mapWorker.findZeroCrossings(points);
+    const zeroes = this.temperatureControl.findZeroCrossings(points);
     this.zeroProbes.set(zeroes);
   }
 
@@ -153,7 +141,10 @@ export class Temperature {
     this.probeCont.update((probe) => ({ ...probe, depth: percent * this.maxDepth }));
 
     // Temperature interpolation
-    this.probeCont.update((probe) => ({ ...probe, temp: this.mapWorker.interpolateTemp(this.probes(), probe.depth) }));
+    this.probeCont.update((probe) => ({
+      ...probe,
+      temp: this.temperatureControl.interpolateTemp(this.probes(), probe.depth),
+    }));
 
     // Tooltip positioning
     this.probeCont.update((probe) => ({ ...probe, y: clampedY }));

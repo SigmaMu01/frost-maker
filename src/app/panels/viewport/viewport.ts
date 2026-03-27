@@ -11,7 +11,6 @@ import {
   effect,
 } from '@angular/core';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ThreeContext } from '../../shared/services/three-context';
 import { ViewCube } from './view-cube/view-cube';
 import { MapWorker } from '../../shared/services/map-worker';
@@ -43,12 +42,6 @@ export class Viewport implements OnDestroy {
       this.addScene();
     });
 
-    // effect(() => {
-    //   const floors = this.buildingManager.floorNum();
-    //   this.buildingManager.updateBuilding();
-    //   console.log(floors);
-    // });
-
     // Optional: react to signals / state changes from UI controls
     // effect(() => { if (someSignal()) this.three.scene.add(...) });
   }
@@ -60,75 +53,49 @@ export class Viewport implements OnDestroy {
     this.three.scene.add(dirLight);
 
     this.three.scene.add(new THREE.GridHelper(20, 20, 0x888888, 0x444444));
-    this.three.scene.add(new THREE.AxesHelper(4));
+    const axesHelper = new THREE.AxesHelper(4);
+    // axesHelper.name = 'axesHelper';
 
     // Building from SVG
     const outline = this.mapWorker.getOutlineNode();
     if (!outline) {
       console.warn('No outline found');
+      this.three.scene.add(axesHelper);
       return;
     }
     const rectNode = outline.children.find((c) => ['rect', 'polygon'].includes(c.name));
-    console.dir(rectNode);
+
     if (!rectNode) {
-      console.warn('No rect found in outline');
+      console.warn('No rect/polygon found in outline');
       return;
+    } else {
+      this.three.scene.remove(axesHelper);
     }
 
-    // Textures
-    const textureLoader = new THREE.TextureLoader();
+    // Supports
+    const supports = this.mapWorker.getSupportNodes();
+    if (supports?.children) {
+      for (var support of supports!.children) {
+        const shape = this.buildingManager.SVGToShape(support);
+        const supportMesh = this.buildingManager.createSupport(shape);
+        this.three.scene.add(supportMesh);
+      }
+    }
 
-    const wallTexture = textureLoader.load('house_1.jpg');
-    wallTexture.colorSpace = THREE.SRGBColorSpace; // important for correct colors
-    wallTexture.wrapS = THREE.RepeatWrapping; // optional: how it tiles if UVs >1
-    wallTexture.wrapT = THREE.RepeatWrapping;
-    wallTexture.repeat.set(0.5, 0.5);
-    wallTexture.offset.set(0, 0.5);
-
-    const wallMaterial = new THREE.MeshStandardMaterial({
-      map: wallTexture,
-      metalness: 0.1,
-      roughness: 0.7,
-    });
-    const grayMaterial = new THREE.MeshStandardMaterial({
-      color: 0x888888, // medium gray – adjust to taste (e.g. 0xaaaaaa, 0x555555)
-      metalness: 0.2,
-      roughness: 0.8,
-    });
-
-    // Fallback: add a plain colored cube if texture fails
-    // fallbackCube.position.set(0, 1, 0);
-    // const fallbackMat = new THREE.MeshStandardMaterial({ color: 0xff4444 });
-    // const fallbackCube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), fallbackMat);
-    // this.three.scene.add(fallbackCube);
-
-    // Simple gray material for top and bottom
-
-    const cubeMaterials = [
-      wallMaterial, // +X (right)
-      wallMaterial, // -X (left)
-      grayMaterial, // +Y (top)
-      grayMaterial, // -Y (bottom)
-      wallMaterial, // +Z (front)
-      wallMaterial, // -Z (back)
-    ];
-    const buildingMaterials = [
-      grayMaterial, // Top/bottom group
-      wallMaterial, // Side group
-    ];
-
-    // Test cube
-    const geometry = new THREE.BoxGeometry(2, 2, 2); // slightly larger so it's visible
-    const cube = new THREE.Mesh(geometry, cubeMaterials);
-    cube.position.set(0, 1, 0); // raise it a bit above the grid
-    // this.three.scene.add(cube);
+    // Temp chains
+    const tempChains = this.mapWorker.getTempChainNodes();
+    if (tempChains?.length) {
+      for (var tempChain of tempChains) {
+        const shapeCenter = this.buildingManager.getTempChainCoords(tempChain);
+        const tempChainRef = this.buildingManager.createTempChain(shapeCenter!);
+        this.three.scene.add(tempChainRef);
+      }
+    }
 
     // Building
     const shape = this.buildingManager.SVGToShape(rectNode);
-    const building = this.buildingManager.createBuildingMesh(shape, buildingMaterials);
-
-    building.position.y = 1; // lift above grid
-
+    // const building = this.buildingManager.createBuildingMesh(shape, buildingMaterials);
+    const building = this.buildingManager.createBuilding(shape);
     this.three.scene.add(building);
   }
 

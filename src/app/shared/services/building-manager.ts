@@ -2,8 +2,16 @@ import { effect, Injectable, signal } from '@angular/core';
 import { INode } from 'svgson';
 import * as THREE from 'three';
 
-const FLOOR_HEIGHT = 2;
-const PILE_HEIGHT = (0.3 / 2.7) * FLOOR_HEIGHT; // Lift building by 30 cm to account for bearing piles
+const FLOOR_HEIGHT = 2.7;
+const SUPPORT_LIFT_Y = 0.3; // Lift building by 30 cm to account for bearing piles
+const SUPPORT_HEIGHT = 2.3;
+const PX_PER_M = 100; // Pixels per meter (svg convert)
+
+const grayMaterial = new THREE.MeshStandardMaterial({
+  color: 0x888888, // medium gray – adjust to taste (e.g. 0xaaaaaa, 0x555555)
+  metalness: 0.2,
+  roughness: 0.8,
+});
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +31,7 @@ export class BuildingManager {
   }
 
   SVGToShape(node: INode): THREE.Shape {
-    const scaleCoords = (x: number) => x / 100;
+    const scaleCoords = (x: number) => x / PX_PER_M;
 
     switch (node.name) {
       case 'rect':
@@ -60,8 +68,7 @@ export class BuildingManager {
         throw new Error('Polygon has no points');
       }
 
-      // Split by ANY whitespace
-      const tokens = raw.trim().split(/\s+/).map(Number);
+      const tokens = raw.trim().split(/\s+/).map(Number); // Split by any whitespace
 
       if (tokens.length % 2 !== 0) {
         throw new Error('Invalid polygon: uneven coordinate count');
@@ -91,18 +98,40 @@ export class BuildingManager {
     }
   }
 
-  createBuildingMesh(shape: THREE.Shape, material?: THREE.Material | THREE.Material[]) {
+  getTempChainCoords(group: INode): { id: string; x: number; y: number } | null {
+    const scaleCoords = (x: number) => x / PX_PER_M;
+
+    const circle = group.children.find((c) => c.name === 'circle');
+    if (!circle) return null;
+
+    const cx = parseFloat(circle.attributes['cx'] || '0');
+    const cy = parseFloat(circle.attributes['cy'] || '0');
+
+    if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+
+    const result = {
+      id: group.name,
+      x: scaleCoords(cx),
+      y: scaleCoords(-cy), // Same Y inversion as building
+    };
+
+    return result;
+  }
+
+  createShape(shape: THREE.Shape, height: number, material?: THREE.Material | THREE.Material[]) {
     this.currentShape = shape;
     this.currentMaterial = material;
 
-    const depth = this.floorNum() * FLOOR_HEIGHT;
+    if (!height) {
+      const height = 1;
+    }
 
     const geometry = new THREE.ExtrudeGeometry(shape, {
-      depth,
+      depth: height,
       bevelEnabled: false,
     });
 
-    geometry.center();
+    // geometry.center();
 
     if (!material) {
       const material = new THREE.MeshStandardMaterial({
@@ -115,12 +144,37 @@ export class BuildingManager {
     const mesh = new THREE.Mesh(geometry, material);
 
     mesh.rotation.x = Math.PI / 2; // Rotate so extrusion goes UP (Y axis)
+    return mesh;
+  }
+
+  createBuilding(shape: THREE.Shape) {
+    const textureLoader = new THREE.TextureLoader();
+
+    const wallTexture = textureLoader.load('house_1.jpg');
+    wallTexture.colorSpace = THREE.SRGBColorSpace; // important for correct colors
+    wallTexture.wrapS = THREE.RepeatWrapping; // optional: how it tiles if UVs >1
+    wallTexture.wrapT = THREE.RepeatWrapping;
+    wallTexture.repeat.set(1 / 2.7, 1 / 2.7);
+    wallTexture.offset.set(0, 0.63);
+
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      map: wallTexture,
+      metalness: 0.1,
+      roughness: 0.7,
+    });
+
+    const buildingMaterials = [
+      grayMaterial, // Top/bottom group
+      wallMaterial, // Side group
+    ];
+
     const height = this.floorNum() * FLOOR_HEIGHT;
 
-    this.buildingMesh = mesh;
-    this.buildingMesh.position.y = height / 2 + PILE_HEIGHT; // Adjust for building height
+    this.buildingMesh = this.createShape(shape, height, buildingMaterials);
+    // this.buildingMesh.position.y = height / 2 + SUPPORT_LIFT_Y; // Adjust for building height
+    this.buildingMesh.position.y = height + SUPPORT_LIFT_Y; // Adjust for building height
 
-    return mesh;
+    return this.buildingMesh;
   }
 
   updateBuilding() {
@@ -135,12 +189,40 @@ export class BuildingManager {
       bevelEnabled: false,
     });
 
-    newGeometry.center();
+    // newGeometry.center();
 
     this.buildingMesh.geometry = newGeometry;
 
     const height = this.floorNum() * FLOOR_HEIGHT;
 
-    this.buildingMesh.position.y = height / 2 + PILE_HEIGHT; // Adjust for building height
+    this.buildingMesh.position.y = height + SUPPORT_LIFT_Y; // Adjust for building height
+  }
+
+  createSupport(shape: THREE.Shape) {
+    const height = SUPPORT_HEIGHT;
+    console.log('Created support');
+    const supportMesh = this.createShape(shape, height, [grayMaterial, grayMaterial]);
+    supportMesh.position.y = SUPPORT_LIFT_Y;
+
+    return supportMesh;
+  }
+
+  createTempChain(c: { id: string; x: number; y: number }) {
+    const height = 12;
+    const radius = 0.2;
+    const cylinder = new THREE.CylinderGeometry(radius, radius, height, 64, 1, true);
+
+    const tempMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide,
+    });
+
+    const tempChain = new THREE.Mesh(cylinder, tempMaterial);
+    tempChain.position.set(c.x, -height / 2, c.y);
+    tempChain.name = c.id;
+
+    return tempChain;
   }
 }

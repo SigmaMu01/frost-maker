@@ -22,7 +22,7 @@ export class Grid implements AfterViewInit {
 
   canvas!: Canvas;
 
-  // pan helpers
+  // Pan helpers
   private isPanning = false;
   private lastPosX = 0;
   private lastPosY = 0;
