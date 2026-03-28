@@ -221,7 +221,10 @@ export class BuildingManager {
 
     const tempChain = new THREE.Mesh(cylinder, tempMaterial);
     tempChain.position.set(c.x, -height / 2, c.y);
-    tempChain.name = c.id;
+    tempChain.userData = {
+      type: 'tempChain',
+      id: c.id, // Temp chain id
+    };
 
     return tempChain;
   }
