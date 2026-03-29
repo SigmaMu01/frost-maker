@@ -16,6 +16,7 @@ import { ViewCube } from './view-cube/view-cube';
 import { MapWorker } from '../../shared/services/map-worker';
 import { BuildingManager } from '../../shared/services/building-manager';
 import { CameraControl } from './utils/camera-control';
+import { DataConnector } from '../../shared/services/data-connector';
 
 @Component({
   selector: 'app-viewport',
@@ -27,6 +28,7 @@ export class Viewport implements OnDestroy {
   private readonly mapWorker = inject(MapWorker);
   private readonly buildingManager = inject(BuildingManager);
   private readonly cameraControl = inject(CameraControl);
+  private readonly dataConnector = inject(DataConnector);
   private readonly three = inject(ThreeContext);
 
   container = viewChild.required<ElementRef<HTMLDivElement>>('container');
@@ -94,11 +96,22 @@ export class Viewport implements OnDestroy {
     }
 
     // Temp chains
+    let tempChainRef: THREE.Mesh = {} as THREE.Mesh;
+
     const tempChains = this.mapWorker.getTempChainNodes();
+
     if (tempChains?.length) {
       for (var tempChain of tempChains) {
         const shapeCenter = this.buildingManager.getTempChainCoords(tempChain);
-        const tempChainRef = this.buildingManager.createTempChain(shapeCenter!);
+        const data = this.dataConnector.getTempChainDataAsTempProbes(shapeCenter?.id);
+
+        tempChainRef = this.buildingManager.createTempChain(
+          shapeCenter!,
+          this.mapWorker.minTemp(),
+          this.mapWorker.maxTemp(),
+          data
+        );
+
         this.three.scene.add(tempChainRef);
       }
     }
@@ -127,15 +140,15 @@ export class Viewport implements OnDestroy {
 
     const step = 1; // grid spacing
 
-    // 👉 Base size + 20% per side
+    // Base size + 20% per side
     let width = size.x * 1.4;
     let depth = size.z * 1.4;
 
-    // 👉 Snap to grid step (VERY important)
+    // Snap to grid step (VERY important)
     width = Math.ceil(width / step) * step;
     depth = Math.ceil(depth / step) * step;
 
-    // 👉 Add one extra step so outer lines "close"
+    // Add one extra step so outer lines "close"
     width += step;
     depth += step;
 
@@ -144,12 +157,12 @@ export class Viewport implements OnDestroy {
 
     const lines: number[] = [];
 
-    // ---- Vertical lines (along Z) ----
+    // Vertical lines (along Z)
     for (let x = -halfW; x <= halfW; x += step) {
       lines.push(x, 0, -halfD, x, 0, halfD);
     }
 
-    // ---- Horizontal lines (along X) ----
+    // Horizontal lines (along X)
     for (let z = -halfD; z <= halfD; z += step) {
       lines.push(-halfW, 0, z, halfW, 0, z);
     }

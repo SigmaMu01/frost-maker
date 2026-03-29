@@ -96,22 +96,16 @@ export class Temperature {
   // Probe control
   // --------------------
   private rebuildProbes() {
-    const frame = this.getTempChainFrame();
+    const points = this.dataConnector.getTempChainDataAsTempProbes(this.selectedTempChainId()!);
 
-    if (!frame?.length) {
+    if (!points) {
       this.probes.set([]);
       return;
     }
 
-    const points = frame
-      .map(([depth, temp]) => ({
-        depth: Number(depth),
-        temp,
-      }))
-      .filter((p) => p.temp !== null)
-      .sort((a, b) => a.depth - b.depth) as TempProbe[];
-
     this.probes.set(points);
+    // console.log('Probes:');
+    // console.dir(this.probes());
 
     // Find zero temperature thresholds
     const zeroes = this.temperatureControl.findZeroCrossings(points);

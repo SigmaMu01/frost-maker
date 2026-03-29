@@ -5,6 +5,7 @@ import {
   type MonitoringDataJSON,
   type TempDataJSON,
 } from '../../core/models/temp-json';
+import { TempProbe } from '../../core/models/probe';
 
 @Injectable({
   providedIn: 'root',
@@ -43,6 +44,7 @@ export class DataConnector {
   }
 
   getTempChainData(tempChainId: string) {
+    // Returns a single temp chain data of a specified time frame
     const output: DataFrame = {};
 
     const data = this._tempData.temperatureValue[tempChainId];
@@ -52,10 +54,30 @@ export class DataConnector {
     //   return null;
     // }
 
-    console.log(data);
-    Object.keys(data).forEach((key) => {
-      output[key] = data[key][this.selectedFrame()] ?? null;
-    });
+    // console.log(data);
+    try {
+      Object.keys(data).forEach((key) => {
+        output[key] = data[key][this.selectedFrame()] ?? null;
+      });
+    } catch {
+      if (data) {
+        throw new Error(`Wrong data structure: ${data}`);
+      }
+    }
     return output;
+  }
+
+  getTempChainDataAsTempProbes(tempChainId: string): TempProbe[] {
+    const frame = Object.entries(this.getTempChainData(tempChainId));
+
+    const points = frame
+      .map(([depth, temp]) => ({
+        depth: Number(depth),
+        temp,
+      }))
+      .filter((p) => p.temp !== null)
+      .sort((a, b) => a.depth - b.depth) as TempProbe[];
+
+    return points;
   }
 }

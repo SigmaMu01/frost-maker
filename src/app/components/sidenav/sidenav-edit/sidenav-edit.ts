@@ -18,8 +18,8 @@ export class SidenavEdit {
   readonly inputJson = viewChild<ElementRef>('json');
   readonly inputSvg = viewChild<ElementRef>('svg');
 
-  minTemp = model<number | null>(-10);
-  maxTemp = model<number | null>(0);
+  minTemp = model<number>(-10);
+  maxTemp = model<number>(0);
 
   constructor(
     private mapWorker: MapWorker,

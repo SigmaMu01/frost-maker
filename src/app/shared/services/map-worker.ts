@@ -15,8 +15,8 @@ export class MapWorker {
   readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
 
   // Temperature borders
-  readonly minTemp = signal<number | null>(null);
-  readonly maxTemp = signal<number | null>(null);
+  readonly minTemp = signal<number>(-5);
+  readonly maxTemp = signal<number>(1);
 
   setSVGTemplate(template: INode) {
     this.isSVGLoaded.set(false);
