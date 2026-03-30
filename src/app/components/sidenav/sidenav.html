@@ -2,19 +2,24 @@
   <button class="sidenav__toggle" (click)="toggleSidenavState()">{{ isSidenavOpen() ? '\<' : '\>' }}</button>
 
   <nav>
-    <a class="button" routerLink="" (click)="onChangeSelectedSidenavOption('home')">
+    <!-- <a class="button" routerLink="" (click)="onChangeSelectedSidenavOption('home')"> -->
+    <a class="button" (click)="onChangeSelectedSidenavOption('home')">
       <img src="icons/info.svg" />
       Справка
     </a>
-    <a class="button" routerLink="grid" (click)="onChangeSelectedSidenavOption('edit')">
+    <!-- <a class="button" routerLink="grid" (click)="onChangeSelectedSidenavOption('edit')"> -->
+    <a class="button" (click)="onChangeSelectedSidenavOption('edit')">
       <img src="icons/grid.svg" />
       Сетка
     </a>
-    <app-sidenav-edit [isSubmenuOpen]="selectedSidenavOption() === 'edit' && isSidenavOpen()" />
+    <!-- <app-sidenav-edit [isSubmenuOpen]="selectedSidenavOption() === 'edit' && isSidenavOpen()" /> -->
+    <!-- <a class="button" routerLink="viewport" (click)="onChangeSelectedSidenavOption('view')"> -->
     <a class="button" routerLink="viewport" (click)="onChangeSelectedSidenavOption('view')">
       <img src="icons/viewport.svg" />
       Визуализация
     </a>
-    <app-sidenav-view [isSubmenuOpen]="selectedSidenavOption() === 'view' && isSidenavOpen()" />
+    <!-- <app-sidenav-view [isSubmenuOpen]="selectedSidenavOption() === 'view' && isSidenavOpen()" /> -->
+    <app-sidenav-edit [isSubmenuOpen]="isSidenavOpen()" />
+    <app-sidenav-view [isSubmenuOpen]="isSidenavOpen()" />
   </nav>
 </aside>

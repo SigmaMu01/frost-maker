@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { SidenavEdit } from './sidenav-edit/sidenav-edit';
 import { RouterLink } from '@angular/router';
 import { SidenavView } from './sidenav-view/sidenav-view';
+import { WindowSwitch } from '../../shared/services/window-switch';
 
 type sidenavState = 'home' | 'edit' | 'view'; // All sidenav options go here
 
@@ -12,6 +13,8 @@ type sidenavState = 'home' | 'edit' | 'view'; // All sidenav options go here
   styleUrl: './sidenav.scss',
 })
 export class Sidenav {
+  windowSwitch = inject(WindowSwitch);
+
   isSidenavOpen = signal(false);
   selectedSidenavOption = signal<sidenavState>('home');
 
@@ -22,5 +25,19 @@ export class Sidenav {
   onChangeSelectedSidenavOption(state: sidenavState) {
     this.selectedSidenavOption.set(state);
     this.isSidenavOpen.set(true);
+
+    switch (state) {
+      case 'home':
+        this.windowSwitch.showViewport.set(false);
+        break;
+      case 'edit':
+        this.windowSwitch.showViewport.set(false);
+        break;
+      case 'view':
+        this.windowSwitch.showViewport.set(true);
+        break;
+      default:
+        this.windowSwitch.showViewport.set(false);
+    }
   }
 }

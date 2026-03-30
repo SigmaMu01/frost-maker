@@ -8,12 +8,23 @@
   transition: grid-template-columns 0.2s ease-in-out;
 
   main {
-    min-width: 0; // Keep this to allow
-    min-height: 0; // the grid to shrink properly
+    min-width: 0; // Keep this to allow the grid to shrink properly
+    min-height: 0;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: stretch;
-    align-items: stretch;
+    position: relative;
+    // display: flex;
+    // flex-direction: column;
+    // justify-content: stretch;
+    // align-items: stretch;
+
+    main > * {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
   }
 }

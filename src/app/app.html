@@ -1,6 +1,8 @@
 <app-sidenav />
 <main>
-  <router-outlet />
+  <!-- <router-outlet /> -->
+  <app-grid [class.hidden]="windowSwitch.showViewport()" />
+  <app-viewport [class.hidden]="!windowSwitch.showViewport()" />
 </main>
 <app-temperature />
 
