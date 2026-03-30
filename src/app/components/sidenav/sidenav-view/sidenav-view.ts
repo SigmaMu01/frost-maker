@@ -14,7 +14,7 @@ export class SidenavView {
   readonly cameraControl = inject(CameraControl);
 
   readonly isSubmenuOpen = input(false);
-  readonly floorNum = model<number>(1);
+  readonly floorNum = model<number>(5);
   readonly fieldOfViewValue = model<number>(60);
 
   constructor() {

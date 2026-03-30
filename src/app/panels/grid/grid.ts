@@ -189,4 +189,10 @@ export class Grid implements AfterViewInit {
   private onSelectionCleared() {
     this.mapWorker.clearSelection();
   }
+
+  ngOnDestroy(): void {
+    if (this.canvas) {
+      this.canvas.dispose();
+    }
+  }
 }
