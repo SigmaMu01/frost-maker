@@ -1,7 +1,8 @@
-import { effect, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { INode } from 'svgson';
 import * as THREE from 'three';
 import { TempProbe } from '../../core/models/probe';
+import { TemperatureControl } from './temperature-control';
 
 const FLOOR_HEIGHT = 2.7;
 const SUPPORT_LIFT_Y = 0.3; // Lift building by 30 cm to account for bearing piles
@@ -18,6 +19,8 @@ const grayMaterial = new THREE.MeshStandardMaterial({
   providedIn: 'root',
 })
 export class BuildingManager {
+  private readonly temperatureControl = inject(TemperatureControl);
+
   private buildingMesh: THREE.Mesh | null = null;
   private currentShape: THREE.Shape | null = null;
   private currentMaterial: THREE.Material | THREE.Material[] | undefined;
@@ -258,8 +261,8 @@ export class BuildingManager {
     } else {
       material = new THREE.MeshBasicMaterial({
         color: 0xffffff,
-        transparent: false,
-        opacity: 0.95,
+        transparent: true,
+        opacity: 0.5,
         side: THREE.DoubleSide,
       });
     }
@@ -279,31 +282,39 @@ export class BuildingManager {
 
   createTempGradientTexture(probes: TempProbe[], minTemp: number, maxTemp: number, height = 512): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 1; // vertical gradient → 1px width is enough
+    canvas.width = 1;
     canvas.height = height;
 
     const ctx = canvas.getContext('2d')!;
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    const imageData = ctx.createImageData(1, height);
 
     const maxDepth = 12;
+    const steps = 64; // Quantization
 
-    for (const p of probes) {
-      if (!p.temp) continue;
+    for (let y = 0; y < height; y++) {
+      // Convert pixel to depth
+      const percent = y / (height - 1);
+      const depth = percent * maxDepth;
 
-      const ratio = (p.temp - minTemp) / (maxTemp - minTemp);
-      const clamped = Math.min(1, Math.max(0, ratio));
-      const hue = 240 - clamped * 240;
+      const temp = this.temperatureControl.interpolateTemp(probes, depth);
 
-      const color = `hsl(${hue}, 90%, 50%)`;
+      const color = this.temperatureControl.getECMWFColor(temp, minTemp, maxTemp, steps);
 
-      // IMPORTANT: invert because canvas Y grows downward
-      const stop = 1 - p.depth / maxDepth;
+      // Parse rgb(...)
+      const match = color.match(/\d+/g)!;
+      const r = Number(match[0]);
+      const g = Number(match[1]);
+      const b = Number(match[2]);
 
-      gradient.addColorStop(stop, color);
+      const i = y * 4;
+
+      imageData.data[i + 0] = r;
+      imageData.data[i + 1] = g;
+      imageData.data[i + 2] = b;
+      imageData.data[i + 3] = 255;
     }
 
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1, height);
+    ctx.putImageData(imageData, 0, 0);
 
     const texture = new THREE.CanvasTexture(canvas);
 
@@ -311,6 +322,10 @@ export class BuildingManager {
     texture.wrapT = THREE.ClampToEdgeWrapping;
 
     texture.colorSpace = THREE.SRGBColorSpace;
+
+    // 🔥 Important for crisp bands
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
 
     return texture;
   }

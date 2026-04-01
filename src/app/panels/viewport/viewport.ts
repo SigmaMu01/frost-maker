@@ -9,6 +9,7 @@ import {
   ChangeDetectorRef,
   inject,
   effect,
+  untracked,
 } from '@angular/core';
 import * as THREE from 'three';
 import { ThreeContext } from '../../shared/services/three-context';
@@ -17,6 +18,7 @@ import { MapWorker } from '../../shared/services/map-worker';
 import { BuildingManager } from '../../shared/services/building-manager';
 import { CameraControl } from './utils/camera-control';
 import { DataConnector } from '../../shared/services/data-connector';
+import { TemperatureControl } from '../../shared/services/temperature-control';
 
 @Component({
   selector: 'app-viewport',
@@ -26,6 +28,7 @@ import { DataConnector } from '../../shared/services/data-connector';
 })
 export class Viewport implements OnDestroy {
   private readonly mapWorker = inject(MapWorker);
+  private readonly temperatureControl = inject(TemperatureControl);
   private readonly buildingManager = inject(BuildingManager);
   private readonly cameraControl = inject(CameraControl);
   private readonly dataConnector = inject(DataConnector);
@@ -46,7 +49,31 @@ export class Viewport implements OnDestroy {
       const ro = new ResizeObserver(() => this.three.resize());
       ro.observe(el);
 
-      this.addScene();
+      // this.addScene();
+    });
+
+    // Create scene context on data load
+    effect(() => {
+      if (this.mapWorker.isSVGLoaded() && this.dataConnector.isJSONLoaded()) {
+        untracked(() => this.cleanScene());
+        this.addScene();
+        console.log('Scene updated');
+      }
+    });
+
+    // Redraw temperature textures on change
+    effect(() => {
+      const min = this.temperatureControl.minTemp();
+      const max = this.temperatureControl.maxTemp();
+
+      this.updateTemperatureColumns(min, max);
+    });
+
+    // Purge scene on data clean
+    effect(() => {
+      if (!this.mapWorker.isSVGLoaded() || !this.dataConnector.isJSONLoaded()) {
+        this.cleanScene();
+      }
     });
 
     effect(() => {
@@ -105,12 +132,14 @@ export class Viewport implements OnDestroy {
         const shapeCenter = this.buildingManager.getTempChainCoords(tempChain);
         const data = this.dataConnector.getTempChainDataAsTempProbes(shapeCenter?.id);
 
-        tempChainRef = this.buildingManager.createTempChain(
-          shapeCenter!,
-          this.mapWorker.minTemp(),
-          this.mapWorker.maxTemp(),
-          data
-        );
+        const min = untracked(() => this.temperatureControl.minTemp());
+        const max = untracked(() => this.temperatureControl.maxTemp());
+
+        tempChainRef = this.buildingManager.createTempChain(shapeCenter!, min, max, data);
+
+        tempChainRef.userData['type'] = 'tempChain';
+        tempChainRef.userData['data'] = data;
+        tempChainRef.userData['shapeCenter'] = shapeCenter;
 
         this.three.scene.add(tempChainRef);
       }
@@ -127,6 +156,35 @@ export class Viewport implements OnDestroy {
 
     // Center camera on the building
     this.cameraControl.centerCamera(center, size);
+  }
+
+  private updateTemperatureColumns(min: number, max: number) {
+    this.three.scene.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return;
+      if (obj.userData?.['type'] !== 'tempChain') return;
+
+      const data = obj.userData['data'];
+      const shapeCenter = obj.userData['shapeCenter'];
+
+      // Recreate only the materials (cheap compared to full mesh)
+      const newMesh = this.buildingManager.createTempChain(shapeCenter, min, max, data);
+
+      // Replace materials
+      obj.material.dispose();
+      obj.material = newMesh.material;
+
+      // Uncomment for vertex colors or attributes
+      // if (obj.geometry && newMesh.geometry) {
+      //   obj.geometry.dispose();
+      //   obj.geometry = newMesh.geometry;
+      // }
+    });
+  }
+
+  private cleanScene() {
+    while (this.three.scene.children.length > 0) {
+      this.three.scene.remove(this.three.scene.children[0]);
+    }
   }
 
   private createRectangularGrid(object: THREE.Object3D) {

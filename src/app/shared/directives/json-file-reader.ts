@@ -1,9 +1,10 @@
-import { Directive } from '@angular/core';
+import { Directive, inject } from '@angular/core';
 import { isDevMode, output } from '@angular/core';
 
 import { BasicFileReader } from '../models/file-reader';
 import { DataConnector } from '../services/data-connector';
 import { MonitoringDataJSON } from '../../core/models/temp-json';
+import { TemperatureControl } from '../services/temperature-control';
 
 @Directive({
   selector: '[appJsonFileReader]',
@@ -13,9 +14,11 @@ import { MonitoringDataJSON } from '../../core/models/temp-json';
   },
 })
 export class JsonFileReader implements BasicFileReader {
+  private readonly dataConnector = inject(DataConnector);
+  private readonly temperatureControl = inject(TemperatureControl);
   // readonly data = output<INode>();
 
-  constructor(private dataConnector: DataConnector) {}
+  constructor() {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -30,6 +33,8 @@ export class JsonFileReader implements BasicFileReader {
 
           this.dataConnector.setTemperatureTemplate(dataJSON);
 
+          this.temperatureControl.setTempBounds(this.dataConnector.getAllData().temperatureValue, 3); // Set temp min and max after data load
+          // this.temperatureControl.setTempBounds(this.dataConnector.getTimeFrameData(), 1);
           // if (isDevMode()) console.log('Parsed JSON:', dataJSON);
         } catch (error) {
           console.error('Error parsing JSON:', error);

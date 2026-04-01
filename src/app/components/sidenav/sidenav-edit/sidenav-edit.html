@@ -2,7 +2,7 @@
 <div class="wrapper">
   <input #json type="file" appJsonFileReader />
   <input #svg type="file" appSvgFileReader />
-  <button (click)="clearCanvas()">Очистить канву</button>
+  <button (click)="clearCanvas()">Очистить</button>
   <div class="panel">
     <div>
       <label for="minTempInput">Min ºC</label>
@@ -11,6 +11,20 @@
     <div>
       <label for="maxTempInput">Max ºC</label>
       <input type="number" [(ngModel)]="maxTemp" />
+    </div>
+  </div>
+  <div class="panel">
+    <div>
+      <button class="" (click)="setGlobalTempBounds()">Всё</button>
+    </div>
+    <div>
+      <button (click)="setTimeFrameTempBounds()">Кадр</button>
+    </div>
+    <!-- <div>
+      <button (click)="setSliceTempBounds()">Срез</button>
+    </div> -->
+    <div>
+      <button (click)="setTempChainTempBounds()">Коса</button>
     </div>
   </div>
   <!-- <button (click)="saveJSON()">Сохранить JSON</button> -->

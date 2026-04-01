@@ -6,18 +6,6 @@ import { TemperatureProbe } from './temperature-probe/temperature-probe';
 import { TempProbe, TempProbeCont } from '../../core/models/probe';
 import { TemperatureControl } from '../../shared/services/temperature-control';
 
-function tempToColor(temp: number, minTemp?: number | null, maxTemp?: number | null) {
-  const min = minTemp ?? 0;
-  const max = maxTemp ?? 0;
-
-  const ratio = (temp - min) / (max - min);
-  const clampedRatio = Math.min(1, Math.max(0, ratio));
-
-  const hue = 240 - clampedRatio * 240;
-
-  return `hsl(${hue}, 90%, 50%)`;
-}
-
 @Component({
   selector: 'app-temperature',
   imports: [TemperatureProbe],
@@ -81,13 +69,24 @@ export class Temperature {
   }
 
   buildGradientFromChainFrame() {
-    const points = this.probes();
-    const stops = points.map((p) => {
-      const percent = this.tempOffsetY(p.depth);
-      const color = tempToColor(p.temp, this.mapWorker.minTemp(), this.mapWorker.maxTemp());
+    const resolution = 100; // ← key parameter (50–200 is good)
+    const min = this.temperatureControl.minTemp();
+    const max = this.temperatureControl.maxTemp();
 
-      return `${color} ${percent.toFixed(2)}%`;
-    });
+    const stops: string[] = [];
+
+    for (let i = 0; i <= resolution; i++) {
+      const percent = (i / resolution) * 100;
+      const depth = (i / resolution) * this.maxDepth;
+
+      const temp = this.temperatureControl.interpolateTemp(this.probes(), depth);
+
+      const color = this.temperatureControl.getECMWFColor(temp, min, max, 16);
+
+      // hard stop (quantized band)
+      stops.push(`${color} ${percent.toFixed(2)}%`);
+      stops.push(`${color} ${percent.toFixed(2)}%`);
+    }
 
     return `linear-gradient(to bottom, ${stops.join(', ')})`;
   }

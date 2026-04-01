@@ -1,5 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+// import { RouterOutlet } from '@angular/router';
 import { Sidenav } from './components/sidenav/sidenav';
 import { Temperature } from './panels/temperature/temperature';
 import { Timeline } from './panels/timeline/timeline';
@@ -9,7 +9,7 @@ import { WindowSwitch } from './shared/services/window-switch';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Sidenav, Temperature, Timeline, Grid, Viewport],
+  imports: [Sidenav, Temperature, Timeline, Grid, Viewport],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

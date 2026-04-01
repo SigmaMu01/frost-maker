@@ -2,12 +2,14 @@ import { inject, Injectable, signal } from '@angular/core';
 
 import * as THREE from 'three';
 import { ThreeContext } from '../../../shared/services/three-context';
+import { MapWorker } from '../../../shared/services/map-worker';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CameraControl {
   private readonly three = inject(ThreeContext);
+  private readonly mapWorker = inject(MapWorker);
 
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
@@ -43,11 +45,14 @@ export class CameraControl {
     const hit = intersects[0].object;
 
     if (hit.userData?.['type'] === 'tempChain') {
-      console.log('Selected temp chain:', hit.userData['id']);
+      // console.log('Selected temp chain:', hit.userData['id']);
+      this.mapWorker.setSelectedObjectId(hit.userData['id']);
 
       // Example highlight
       // const mat = hit.material as THREE.MeshBasicMaterial;
       // mat.color.set(0xff0000);
+    } else {
+      this.mapWorker.clearSelection();
     }
   }
 

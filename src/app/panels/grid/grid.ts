@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, effect, ElementRef, HostListener, viewChild, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  effect,
+  ElementRef,
+  HostListener,
+  inject,
+  viewChild,
+  ViewChild,
+} from '@angular/core';
 
 // import * as fabric from 'fabric'; // To-Do: remove this in favor of minimal import like below:
 import { Canvas, Point, Line, TPointerEventInfo, TPointerEvent, TEvent, FabricObject } from 'fabric';
@@ -17,6 +26,9 @@ interface FabricObjectWithID extends FabricObject {
   styleUrl: './grid.scss',
 })
 export class Grid implements AfterViewInit {
+  readonly mapWorker = inject(MapWorker);
+  readonly dataConnector = inject(DataConnector); // Required to check if temp chain has data
+
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('fabricCanvas');
   containerRef = viewChild.required<ElementRef<HTMLDivElement>>('fabricContainer');
 
@@ -27,10 +39,7 @@ export class Grid implements AfterViewInit {
   private lastPosX = 0;
   private lastPosY = 0;
 
-  constructor(
-    private mapWorker: MapWorker,
-    private dataConnector: DataConnector // Required to check if temp chain has data
-  ) {
+  constructor() {
     effect(() => {
       if (this.mapWorker.isSVGLoaded() && this.dataConnector.isJSONLoaded()) {
         this.drawSVG();
@@ -47,7 +56,6 @@ export class Grid implements AfterViewInit {
     this.initCanvas();
     this.mapWorker.registerCanvas(this.canvas);
     this.resizeCanvas();
-    // this.drawGrid();
     this.mapWorker.clearCanvas();
   }
 
@@ -87,8 +95,6 @@ export class Grid implements AfterViewInit {
   }
 
   private drawSVG() {
-    // this.canvas.clear();
-    // this.drawGrid();
     this.mapWorker.clearCanvas();
 
     const children = this.mapWorker.getSVGChildren();

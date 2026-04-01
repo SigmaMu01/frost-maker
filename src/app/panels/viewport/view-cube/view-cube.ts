@@ -27,10 +27,10 @@ export class ViewCube implements OnInit, OnDestroy {
     const materials = [
       this.faceMaterial('+X', '#ff4444'), // red
       this.faceMaterial('-X', '#cc2222'),
-      this.faceMaterial('+Y', '#44ff44'), // green
-      this.faceMaterial('-Y', '#22cc22'),
       this.faceMaterial('+Z', '#4444ff'), // blue
       this.faceMaterial('-Z', '#2222cc'),
+      this.faceMaterial('-Y', '#22cc22'),
+      this.faceMaterial('+Y', '#44ff44'), // green
     ];
 
     this.cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), materials);

@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, input, model, OnInit, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, input, model, OnInit, viewChild } from '@angular/core';
 
 import { JsonFileReader } from '../../../shared/directives/json-file-reader';
 import { SvgFileReader } from '../../../shared/directives/svg-file-reader';
@@ -6,6 +6,7 @@ import { mapSVG } from '../../../core/models/building';
 import { MapWorker } from '../../../shared/services/map-worker';
 import { DataConnector } from '../../../shared/services/data-connector';
 import { FormsModule } from '@angular/forms';
+import { TemperatureControl } from '../../../shared/services/temperature-control';
 
 @Component({
   selector: 'app-sidenav-edit',
@@ -14,6 +15,10 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './sidenav-edit.scss',
 })
 export class SidenavEdit {
+  private readonly temperatureControl = inject(TemperatureControl);
+  private readonly mapWorker = inject(MapWorker);
+  private readonly dataConnector = inject(DataConnector);
+
   readonly isSubmenuOpen = input(false);
   readonly inputJson = viewChild<ElementRef>('json');
   readonly inputSvg = viewChild<ElementRef>('svg');
@@ -21,25 +26,23 @@ export class SidenavEdit {
   minTemp = model<number>(-4);
   maxTemp = model<number>(0.5);
 
-  constructor(
-    private mapWorker: MapWorker,
-    private dataConnector: DataConnector
-  ) {
-    // Service → UI
-    // effect(() => {
-    //   this.minTemp.set(this.mapWorker.minTemp());
-    //   this.maxTemp.set(this.mapWorker.maxTemp());
-    //   console.log('New min/max values: ', this.minTemp(), this.maxTemp());
-    // });
-
-    // UI → Service
+  constructor() {
+    // UI -> Service
     effect(() => {
-      const min = this.minTemp();
-      const max = this.maxTemp();
+      this.temperatureControl.minTemp.set(this.minTemp());
+      this.temperatureControl.maxTemp.set(this.maxTemp());
+    });
+    // Service -> UI
+    effect(() => {
+      const min = this.temperatureControl.minTemp();
+      const max = this.temperatureControl.maxTemp();
 
-      this.mapWorker.minTemp.set(min);
-      this.mapWorker.maxTemp.set(max);
-      console.log('New min/max values: ', this.mapWorker.minTemp(), this.mapWorker.maxTemp());
+      if (this.minTemp() !== min) {
+        this.minTemp.set(min);
+      }
+      if (this.maxTemp() !== max) {
+        this.maxTemp.set(max);
+      }
     });
   }
 
@@ -77,5 +80,29 @@ export class SidenavEdit {
 
     // Clean up the object URL after the download is triggered
     URL.revokeObjectURL(url);
+  }
+
+  setGlobalTempBounds() {
+    const data = this.dataConnector.getAllData().temperatureValue;
+    this.temperatureControl.setTempBounds(data, 3);
+  }
+
+  setSliceTempBounds() {
+    // this.temperatureControl.setTempBounds(this.dataConnector.getTimeFrameData(), 1);
+  }
+
+  setTimeFrameTempBounds() {
+    const data = this.dataConnector.getTimeFrameData();
+    this.temperatureControl.setTempBounds(data, 1);
+  }
+
+  setTempChainTempBounds() {
+    const id = this.mapWorker.selectedTempChainId();
+
+    if (id) {
+      const data = this.dataConnector.getTempChainData(id);
+
+      this.temperatureControl.setTempBounds(data, 0);
+    }
   }
 }
