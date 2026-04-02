@@ -106,7 +106,7 @@ export class TemperatureControl {
     }
   }
 
-  interpolateTemp(probes: TempProbe[], depth: number): number {
+  interpolateTemp(probes: TempProbe[], depth: number): number | null {
     if (!probes || probes.length === 0) return 0;
 
     // Ensure sorted (critical)
@@ -115,14 +115,18 @@ export class TemperatureControl {
     const first = sorted[0];
     const last = sorted[sorted.length - 1];
 
-    // Clamp before first
-    if (depth <= first.depth) {
-      return first.temp;
-    }
+    // // Clamp before first
+    // if (depth <= first.depth) {
+    //   return first.temp;
+    // }
 
-    // Clamp after last
-    if (depth >= last.depth) {
-      return last.temp;
+    // // Clamp after last
+    // if (depth >= last.depth) {
+    //   return last.temp;
+    // }
+
+    if (depth < first.depth || depth > last.depth) {
+      return null;
     }
 
     // Normal interpolation

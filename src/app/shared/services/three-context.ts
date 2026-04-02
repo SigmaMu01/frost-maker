@@ -35,9 +35,14 @@ export class ThreeContext {
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: false,
+      preserveDrawingBuffer: true, // Allows screenshots
+      alpha: true,
       powerPreference: 'high-performance',
     });
+
+    // Make sure to remove background
+    this.renderer.setClearColor(0x000000, 0);
+    this.scene.background = null;
 
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(container.clientWidth, container.clientHeight);

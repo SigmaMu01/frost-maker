@@ -1,14 +1,33 @@
 <div>
   <!-- <label for="fruits">Choose a fruit:</label> -->
-  <select id="fruits" name="fruits">
+  <!-- <select id="fruits" name="fruits"> -->
+  <!-- <select>
     <option value="all">Все данные</option>
     <option value="day">Среднее за день</option>
     <option value="week">Среднее за неделю</option>
     <option value="month">Среднее за месяц</option>
-  </select>
+  </select> -->
+  <input type="range" min="5" max="60" [value]="frameWidth()" (input)="frameWidth.set($any($event.target).value)" />
+  <div class="controls">
+    <button (click)="goStart()">⏮</button>
+    <button (click)="prevFrame()">⏪</button>
+    <button (click)="togglePlay()">{{ isPlaying() ? '⏸' : '▶️' }}</button>
+    <button (click)="nextFrame()">⏩</button>
+    <button (click)="goEnd()">⏭</button>
+  </div>
 </div>
-<nav>
+<div class="labels">
+  @for (item of labels(); track item.index) { @if (item.show) {
+  <span class="label" [style.left.px]="item.index * frameWidth()">{{ item.date | date:'MM-dd HH:mm' }}</span>
+  } }
+</div>
+<nav #timelineNav>
   @for (timeFrameDate of timeFrameDates(); track timeFrameDate) {
-  <button [title]="timeFrameDate" [class.active]="$index === selectedFrame()" (click)="onSelectFrame($index)"></button>
+  <button
+    [style.width.px]="frameWidth()"
+    [title]="timeFrameDate | date:'yyyy-MM-dd HH:mm'"
+    [class.active]="$index === selectedTimeFrame()"
+    (click)="onSelectFrame($index)"
+  ></button>
   }
 </nav>

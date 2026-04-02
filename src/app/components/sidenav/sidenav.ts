@@ -3,12 +3,13 @@ import { SidenavEdit } from './sidenav-edit/sidenav-edit';
 import { RouterLink } from '@angular/router';
 import { SidenavView } from './sidenav-view/sidenav-view';
 import { WindowSwitch } from '../../shared/services/window-switch';
+import { SidenavSaver } from './sidenav-saver/sidenav-saver';
 
 type sidenavState = 'home' | 'edit' | 'view'; // All sidenav options go here
 
 @Component({
   selector: 'app-sidenav',
-  imports: [SidenavEdit, SidenavView, RouterLink],
+  imports: [SidenavEdit, SidenavView, RouterLink, SidenavSaver],
   templateUrl: './sidenav.html',
   styleUrl: './sidenav.scss',
 })

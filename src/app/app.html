@@ -1,9 +1,9 @@
 <app-sidenav />
 <main>
   <!-- <router-outlet /> -->
+  <app-overlay id="canvas-legend" />
   <app-grid [class.hidden]="windowSwitch.showViewport()" />
   <app-viewport [class.hidden]="!windowSwitch.showViewport()" />
 </main>
 <app-temperature />
-
 <app-timeline />

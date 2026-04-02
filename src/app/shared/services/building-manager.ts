@@ -262,7 +262,7 @@ export class BuildingManager {
       material = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.25,
         side: THREE.DoubleSide,
       });
     }
@@ -298,20 +298,23 @@ export class BuildingManager {
 
       const temp = this.temperatureControl.interpolateTemp(probes, depth);
 
-      const color = this.temperatureControl.getECMWFColor(temp, minTemp, maxTemp, steps);
+      const color = temp
+        ? this.temperatureControl.getECMWFColor(temp, minTemp, maxTemp, steps)
+        : 'rgba(255, 255, 255, 63)';
 
       // Parse rgb(...)
       const match = color.match(/\d+/g)!;
       const r = Number(match[0]);
       const g = Number(match[1]);
       const b = Number(match[2]);
+      const a = Number(match[3]);
 
       const i = y * 4;
 
       imageData.data[i + 0] = r;
       imageData.data[i + 1] = g;
       imageData.data[i + 2] = b;
-      imageData.data[i + 3] = 255;
+      imageData.data[i + 3] = Number.isNaN(a) ? 255 : a;
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -323,7 +326,7 @@ export class BuildingManager {
 
     texture.colorSpace = THREE.SRGBColorSpace;
 
-    // 🔥 Important for crisp bands
+    // Important for crisp bands
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
 

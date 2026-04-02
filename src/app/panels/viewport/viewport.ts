@@ -65,6 +65,8 @@ export class Viewport implements OnDestroy {
     effect(() => {
       const min = this.temperatureControl.minTemp();
       const max = this.temperatureControl.maxTemp();
+      const _ = this.dataConnector.selectedFrame();
+      console.log('New frame', _);
 
       this.updateTemperatureColumns(min, max);
     });
@@ -130,7 +132,7 @@ export class Viewport implements OnDestroy {
     if (tempChains?.length) {
       for (var tempChain of tempChains) {
         const shapeCenter = this.buildingManager.getTempChainCoords(tempChain);
-        const data = this.dataConnector.getTempChainDataAsTempProbes(shapeCenter?.id);
+        const data = untracked(() => this.dataConnector.getTempChainDataAsTempProbes(shapeCenter?.id));
 
         const min = untracked(() => this.temperatureControl.minTemp());
         const max = untracked(() => this.temperatureControl.maxTemp());
@@ -138,7 +140,7 @@ export class Viewport implements OnDestroy {
         tempChainRef = this.buildingManager.createTempChain(shapeCenter!, min, max, data);
 
         tempChainRef.userData['type'] = 'tempChain';
-        tempChainRef.userData['data'] = data;
+        // tempChainRef.userData['data'] = data;
         tempChainRef.userData['shapeCenter'] = shapeCenter;
 
         this.three.scene.add(tempChainRef);
@@ -163,8 +165,9 @@ export class Viewport implements OnDestroy {
       if (!(obj instanceof THREE.Mesh)) return;
       if (obj.userData?.['type'] !== 'tempChain') return;
 
-      const data = obj.userData['data'];
+      // const data = obj.userData['data'];
       const shapeCenter = obj.userData['shapeCenter'];
+      const data = untracked(() => this.dataConnector.getTempChainDataAsTempProbes(shapeCenter?.id));
 
       // Recreate only the materials (cheap compared to full mesh)
       const newMesh = this.buildingManager.createTempChain(shapeCenter, min, max, data);

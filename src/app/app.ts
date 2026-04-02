@@ -6,10 +6,11 @@ import { Timeline } from './panels/timeline/timeline';
 import { Grid } from './panels/grid/grid';
 import { Viewport } from './panels/viewport/viewport';
 import { WindowSwitch } from './shared/services/window-switch';
+import { Overlay } from './components/overlay/overlay';
 
 @Component({
   selector: 'app-root',
-  imports: [Sidenav, Temperature, Timeline, Grid, Viewport],
+  imports: [Sidenav, Temperature, Timeline, Grid, Viewport, Overlay],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

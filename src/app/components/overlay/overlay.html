@@ -1,0 +1,15 @@
+@if (timeFrameAvailable()) {
+<div class="panel date-time">{{selectedTimeFrameLabel() | date:'yyyy-MM-dd HH:mm'}}</div>
+} @if (true) {
+<div class="panel temp-legend" [style.--gradient]="tempBorder()">
+  <div class="bar"></div>
+  <div class="ticks">
+    @for (tick of ticks(); track tick) {
+    <div class="tick" [style.left.%]="tick.percent">
+      <div class="dash"></div>
+      <span>{{ tick.value }}</span>
+    </div>
+    }
+  </div>
+</div>
+}

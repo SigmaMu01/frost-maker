@@ -15,6 +15,7 @@ export class DataConnector {
 
   readonly selectedFrame = signal<number>(0); // Current frame for timeline
   readonly timeFrame = signal<'all' | 'day' | 'week' | 'month'>('all');
+  readonly totalFrames = computed(() => this._tempData().utcTimestamp.length);
 
   readonly isJSONLoaded = signal(false); // Signal to the timeline that it can draw frames
 
