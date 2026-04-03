@@ -10,5 +10,23 @@
       <input name="fieldOfView" type="number" min="40" max="130" [(ngModel)]="fieldOfViewValue" />
     </div>
   </div>
+  <div class="panel">
+    <div>
+      <button (click)="makeBuildingTransparent()">B transp</button>
+    </div>
+    <div>
+      <button (click)="restoreBuilding()">B restore</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div>
+      <button (click)="toggleCube()">3D Cube vis</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div>
+      <button (click)="toggleColorTheme()">COLOR</button>
+    </div>
+  </div>
 </div>
 }

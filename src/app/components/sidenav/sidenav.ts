@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { SidenavEdit } from './sidenav-edit/sidenav-edit';
 import { RouterLink } from '@angular/router';
 import { SidenavView } from './sidenav-view/sidenav-view';
@@ -18,6 +18,12 @@ export class Sidenav {
 
   isSidenavOpen = signal(false);
   selectedSidenavOption = signal<sidenavState>('home');
+
+  constructor() {
+    afterNextRender(() => {
+      this.isSidenavOpen.set(false);
+    });
+  }
 
   toggleSidenavState() {
     this.isSidenavOpen.update((state) => !state);

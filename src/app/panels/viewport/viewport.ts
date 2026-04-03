@@ -66,7 +66,6 @@ export class Viewport implements OnDestroy {
       const min = this.temperatureControl.minTemp();
       const max = this.temperatureControl.maxTemp();
       const _ = this.dataConnector.selectedFrame();
-      console.log('New frame', _);
 
       this.updateTemperatureColumns(min, max);
     });
@@ -93,6 +92,9 @@ export class Viewport implements OnDestroy {
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
     dirLight.position.set(6, 10, 8);
     this.three.scene.add(dirLight);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    this.three.scene.add(ambient);
 
     // this.three.scene.add(new THREE.GridHelper(20, 20, 0x888888, 0x444444));
     // const axesHelper = new THREE.AxesHelper(4);
@@ -124,6 +126,22 @@ export class Viewport implements OnDestroy {
       }
     }
 
+    // Building
+    const shape = this.buildingManager.SVGToShape(rectNode);
+    // const building = this.buildingManager.createBuildingMesh(shape, buildingMaterials);
+    const building = this.buildingManager.createBuilding(shape);
+    building.userData['type'] = 'building';
+
+    this.three.scene.add(building);
+    this.buildingManager.setBuildingMesh(building);
+
+    const floor = this.buildingManager.createFloor(shape);
+    this.three.scene.add(floor);
+
+    // Create grid on floor level under the building
+    const grid = this.buildingManager.createRectangularGrid(building);
+    this.three.scene.add(grid);
+
     // Temp chains
     let tempChainRef: THREE.Mesh = {} as THREE.Mesh;
 
@@ -147,17 +165,8 @@ export class Viewport implements OnDestroy {
       }
     }
 
-    // Building
-    const shape = this.buildingManager.SVGToShape(rectNode);
-    // const building = this.buildingManager.createBuildingMesh(shape, buildingMaterials);
-    const building = this.buildingManager.createBuilding(shape);
-    this.three.scene.add(building);
-
-    // Create grid on floor level under the building
-    const { center, size } = this.createRectangularGrid(building);
-
     // Center camera on the building
-    this.cameraControl.centerCamera(center, size);
+    this.cameraControl.centerCamera(grid.userData['center'], grid.userData['size']);
   }
 
   private updateTemperatureColumns(min: number, max: number) {
@@ -188,62 +197,6 @@ export class Viewport implements OnDestroy {
     while (this.three.scene.children.length > 0) {
       this.three.scene.remove(this.three.scene.children[0]);
     }
-  }
-
-  private createRectangularGrid(object: THREE.Object3D) {
-    const box = new THREE.Box3().setFromObject(object);
-
-    const center = new THREE.Vector3();
-    const size = new THREE.Vector3();
-
-    box.getCenter(center);
-    box.getSize(size);
-
-    const step = 1; // grid spacing
-
-    // Base size + 20% per side
-    let width = size.x * 1.4;
-    let depth = size.z * 1.4;
-
-    // Snap to grid step (VERY important)
-    width = Math.ceil(width / step) * step;
-    depth = Math.ceil(depth / step) * step;
-
-    // Add one extra step so outer lines "close"
-    width += step;
-    depth += step;
-
-    const halfW = width / 2;
-    const halfD = depth / 2;
-
-    const lines: number[] = [];
-
-    // Vertical lines (along Z)
-    for (let x = -halfW; x <= halfW; x += step) {
-      lines.push(x, 0, -halfD, x, 0, halfD);
-    }
-
-    // Horizontal lines (along X)
-    for (let z = -halfD; z <= halfD; z += step) {
-      lines.push(-halfW, 0, z, halfW, 0, z);
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
-
-    const material = new THREE.LineBasicMaterial({
-      color: 0x444444,
-      transparent: true,
-      opacity: 0.8,
-    });
-
-    const grid = new THREE.LineSegments(geometry, material);
-
-    grid.position.set(center.x, 0, center.z);
-
-    this.three.scene.add(grid);
-
-    return { center, size };
   }
 
   ngOnDestroy() {

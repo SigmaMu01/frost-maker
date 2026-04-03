@@ -4,7 +4,7 @@
 html {
   height: 100%;
   box-sizing: border-box;
-  color-scheme: dark;
+  // color-scheme: dark;
   -moz-text-size-adjust: none;
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
@@ -457,5 +457,17 @@ h5,
 @media screen and (max-width: 479px) {
   h1.h2 {
     font-size: var(--font-h2-mobile);
+  }
+}
+
+html.light {
+  @include light-theme;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  html:not(.dark):not(.light) {
+    @include light-theme;
+    color-scheme: light;
   }
 }

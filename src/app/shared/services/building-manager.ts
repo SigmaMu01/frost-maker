@@ -9,8 +9,40 @@ const SUPPORT_LIFT_Y = 0.3; // Lift building by 30 cm to account for bearing pil
 const SUPPORT_HEIGHT = 2.3;
 const PX_PER_M = 100; // Pixels per meter (svg convert)
 
-const grayMaterial = new THREE.MeshStandardMaterial({
-  color: 0x888888, // medium gray – adjust to taste (e.g. 0xaaaaaa, 0x555555)
+const textureLoader = new THREE.TextureLoader();
+
+const topMaterial = new THREE.MeshStandardMaterial({
+  color: 0x888888,
+  transparent: true,
+  opacity: 0.3,
+});
+
+const bottomMaterial = new THREE.MeshStandardMaterial({
+  color: 0x666666,
+  transparent: false,
+  opacity: 1, // 👈 fully visible base
+});
+bottomMaterial.polygonOffset = true;
+bottomMaterial.polygonOffsetFactor = 1;
+bottomMaterial.polygonOffsetUnits = 1;
+
+const wallTexture = textureLoader.load('house_1.jpg');
+wallTexture.colorSpace = THREE.SRGBColorSpace; // important for correct colors
+wallTexture.wrapS = THREE.RepeatWrapping; // optional: how it tiles if UVs >1
+wallTexture.wrapT = THREE.RepeatWrapping;
+wallTexture.repeat.set(1 / 2.7, 1 / 2.7);
+wallTexture.offset.set(0, 0.63);
+
+const wallMaterial = new THREE.MeshStandardMaterial({
+  map: wallTexture,
+  metalness: 0.1,
+  roughness: 0.7,
+  transparent: true,
+  opacity: 0.4,
+});
+
+const supportMaterial = new THREE.MeshStandardMaterial({
+  color: 0xa8a8a8,
   metalness: 0.2,
   roughness: 0.8,
 });
@@ -32,6 +64,10 @@ export class BuildingManager {
       const _ = this.floorNum();
       this.updateBuilding();
     });
+  }
+
+  setBuildingMesh(mesh: THREE.Mesh) {
+    this.buildingMesh = mesh;
   }
 
   SVGToShape(node: INode): THREE.Shape {
@@ -123,6 +159,33 @@ export class BuildingManager {
     else throw new Error(`Temp chain with no ID found: ${result}`);
   }
 
+  private splitTopBottom(geometry: THREE.ExtrudeGeometry) {
+    const groups = geometry.groups;
+
+    // Clear existing groups
+    geometry.clearGroups();
+
+    for (const group of groups) {
+      // group.materialIndex === 0 → caps
+      // group.materialIndex === 1 → sides
+
+      if (group.materialIndex === 1) {
+        // sides → keep as material 2
+        geometry.addGroup(group.start, group.count, 2);
+        continue;
+      }
+
+      // Caps: split into top and bottom
+      const half = group.count / 2;
+
+      // bottom
+      geometry.addGroup(group.start, half, 1);
+
+      // top
+      geometry.addGroup(group.start + half, half, 0);
+    }
+  }
+
   createShape(shape: THREE.Shape, height: number, material?: THREE.Material | THREE.Material[]) {
     this.currentShape = shape;
     this.currentMaterial = material;
@@ -146,6 +209,8 @@ export class BuildingManager {
       });
     }
 
+    this.splitTopBottom(geometry);
+
     const mesh = new THREE.Mesh(geometry, material);
 
     mesh.rotation.x = Math.PI / 2; // Rotate so extrusion goes UP (Y axis)
@@ -153,25 +218,13 @@ export class BuildingManager {
   }
 
   createBuilding(shape: THREE.Shape) {
-    const textureLoader = new THREE.TextureLoader();
-
-    const wallTexture = textureLoader.load('house_1.jpg');
-    wallTexture.colorSpace = THREE.SRGBColorSpace; // important for correct colors
-    wallTexture.wrapS = THREE.RepeatWrapping; // optional: how it tiles if UVs >1
-    wallTexture.wrapT = THREE.RepeatWrapping;
-    wallTexture.repeat.set(1 / 2.7, 1 / 2.7);
-    wallTexture.offset.set(0, 0.63);
-
     const wallMaterial = new THREE.MeshStandardMaterial({
       map: wallTexture,
       metalness: 0.1,
       roughness: 0.7,
     });
 
-    const buildingMaterials = [
-      grayMaterial, // Top/bottom group
-      wallMaterial, // Side group
-    ];
+    const buildingMaterials = [topMaterial, bottomMaterial, wallMaterial];
 
     const height = this.floorNum() * FLOOR_HEIGHT;
 
@@ -206,7 +259,7 @@ export class BuildingManager {
   createSupport(shape: THREE.Shape) {
     const height = SUPPORT_HEIGHT;
     console.log('Created support');
-    const supportMesh = this.createShape(shape, height, [grayMaterial, grayMaterial]);
+    const supportMesh = this.createShape(shape, height, [supportMaterial, supportMaterial, supportMaterial]);
     supportMesh.position.y = SUPPORT_LIFT_Y;
 
     return supportMesh;
@@ -331,5 +384,186 @@ export class BuildingManager {
     texture.minFilter = THREE.NearestFilter;
 
     return texture;
+  }
+
+  createRectangularGrid(object: THREE.Object3D) {
+    const box = new THREE.Box3().setFromObject(object);
+
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+
+    box.getCenter(center);
+    box.getSize(size);
+
+    const step = 1; // grid spacing
+
+    // Base size + 20% per side
+    let width = size.x * 1.4;
+    let depth = size.z * 1.4;
+
+    // Snap to grid step (VERY important)
+    width = Math.ceil(width / step) * step;
+    depth = Math.ceil(depth / step) * step;
+
+    // Add one extra step so outer lines "close"
+    width += step;
+    depth += step;
+
+    const halfW = width / 2;
+    const halfD = depth / 2;
+
+    const lines: number[] = [];
+
+    // Vertical lines (along Z)
+    for (let x = -halfW; x <= halfW; x += step) {
+      lines.push(x, 0, -halfD, x, 0, halfD);
+    }
+
+    // Horizontal lines (along X)
+    for (let z = -halfD; z <= halfD; z += step) {
+      lines.push(-halfW, 0, z, halfW, 0, z);
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
+
+    const material = new THREE.LineBasicMaterial({
+      color: 0x666666,
+      transparent: true,
+      opacity: 0.8,
+    });
+
+    const grid = new THREE.LineSegments(geometry, material);
+
+    grid.position.set(center.x, 0, center.z);
+
+    // this.three.scene.add(grid);
+
+    grid.userData = {
+      center: center,
+      size: size,
+    };
+
+    return grid;
+  }
+
+  createFloor(shape: THREE.Shape) {
+    const geometry = new THREE.ShapeGeometry(shape);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x666666,
+      transparent: true,
+      opacity: 0.4,
+
+      depthWrite: false,
+      depthTest: true,
+
+      side: THREE.BackSide,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.rotation.x = Math.PI / 2;
+    mesh.position.y = SUPPORT_LIFT_Y;
+
+    mesh.renderOrder = 1;
+
+    mesh.userData['type'] = 'building-floor';
+
+    return mesh;
+  }
+
+  setBuildingTransparency(opacity: number) {
+    // Set building to transparent for better view of the temperature chains
+    // root.traverse((obj) => {
+    const obj = this.buildingMesh;
+
+    if (!(obj instanceof THREE.Mesh)) return;
+
+    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+
+    for (let mat of materials) {
+      if (!mat) continue;
+
+      // Store original values once
+      if (!mat.userData['_original']) {
+        mat.userData['_original'] = {
+          transparent: mat.transparent,
+          opacity: mat.opacity,
+          depthWrite: mat.depthWrite,
+        };
+      }
+
+      mat.transparent = opacity < 1;
+      mat.opacity = opacity;
+
+      // Important for correct blending
+      mat.depthWrite = opacity === 1;
+
+      mat.needsUpdate = true;
+    }
+    // });
+  }
+
+  // setBuildingTransparencySelective({
+  //   top = 1,
+  //   bottom = 1,
+  //   sides = 1,
+  // }: {
+  //   top?: number;
+  //   bottom?: number;
+  //   sides?: number;
+  // }) {
+  //   const obj = this.buildingMesh;
+  //   if (!(obj instanceof THREE.Mesh)) return;
+
+  //   const materials = obj.material as THREE.Material[];
+
+  //   const configs = [
+  //     { opacity: top }, // 0
+  //     { opacity: bottom }, // 1
+  //     { opacity: sides }, // 2
+  //   ];
+
+  //   materials.forEach((mat, i) => {
+  //     const targetOpacity = configs[i]?.opacity ?? 1;
+
+  //     if (!mat.userData['_original']) {
+  //       mat.userData['_original'] = {
+  //         transparent: mat.transparent,
+  //         opacity: mat.opacity,
+  //         depthWrite: mat.depthWrite,
+  //       };
+  //     }
+
+  //     mat.transparent = targetOpacity < 1;
+  //     mat.opacity = targetOpacity;
+
+  //     // Critical for proper blending
+  //     mat.depthWrite = targetOpacity === 1;
+
+  //     mat.needsUpdate = true;
+  //   });
+  // }
+
+  restoreBuildingMaterials() {
+    // root.traverse((obj) => {
+    const obj = this.buildingMesh;
+
+    if (!(obj instanceof THREE.Mesh)) return;
+
+    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+
+    for (let mat of materials) {
+      const original = mat.userData['_original'];
+      if (!original) continue;
+
+      mat.transparent = original.transparent;
+      mat.opacity = original.opacity;
+      mat.depthWrite = original.depthWrite;
+
+      mat.needsUpdate = true;
+    }
+    // });
   }
 }

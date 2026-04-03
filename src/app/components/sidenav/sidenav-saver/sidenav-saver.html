@@ -1,4 +1,12 @@
 @if (isSubmenuOpen()) {
-<button (click)="saveScreenshot()">Фото</button>
-<button (click)="saveAnimation()">Анимация</button>
+<div class="wrapper">
+  <div class="panel">
+    <div>
+      <button (click)="saveScreenshot()">Фото</button>
+    </div>
+    <div>
+      <button (click)="saveAnimation()">Анимация</button>
+    </div>
+  </div>
+</div>
 }

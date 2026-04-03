@@ -79,7 +79,11 @@ export class Timeline {
       let next = this.selectedTimeFrame() + 1;
 
       if (next >= this.timeFrameDates().length) {
-        next = 0; // loop
+        // next = 0; // loop
+        clearInterval(this.playInterval);
+        this.goStart();
+        this.isPlaying.set(false);
+        return;
       }
 
       this.onSelectFrame(next);

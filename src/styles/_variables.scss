@@ -3,6 +3,7 @@ $main-panel-blur: blur(2px);
 $box-shadow-card: 10px 10px 15px #00000080;
 
 :root {
+  color-scheme: dark;
   // Color scheme
   --color-primary: #101011;
   --color-secondary: #1c1c1e;
@@ -82,4 +83,38 @@ $box-shadow-card: 10px 10px 15px #00000080;
 
   --blur-strong: blur(5px);
   --blur-weak: blur(2px);
+}
+
+@mixin light-theme {
+  --color-primary: #f6f7f9;
+  --color-secondary: #ffffff;
+
+  --color-secondary-accent: color-mix(in srgb, var(--color-secondary) 92%, black);
+  --color-secondary-semi-transparent-85: color-mix(in srgb, var(--color-secondary) 85%, transparent);
+  --color-secondary-semi-transparent-65: color-mix(in srgb, var(--color-secondary) 65%, transparent);
+
+  --color-accent: rgb(0, 140, 170);
+
+  --color-border: #d6d6d6;
+
+  --color-button: #1a1a1a;
+  --color-button-hover: #0e7490;
+  --color-button-active: #d0d0d0;
+
+  --color-alert: #d63c22;
+  --color-link-hover: color-mix(in srgb, currentColor 20%, transparent);
+
+  --color-card-label: color-mix(in srgb, currentColor 15%, transparent);
+  --color-card-accent: #d4d4d8;
+  --color-card-input-field: #f1f1f1;
+
+  --color-text-primary: #111;
+  --color-text-card: color-mix(in srgb, currentColor 70%, transparent);
+  --color-text-extra: #666;
+  --color-text-small: #888;
+  --color-text-small-accent: #777;
+  --color-text-select: #0f5e6e;
+
+  --shadow-card-outline: 0 6px 12px rgba(0, 0, 0, 0.08);
+  --shadow-text: 1px 1px 2px rgba(0, 0, 0, 0.25);
 }

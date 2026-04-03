@@ -1,7 +1,8 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 
 import * as THREE from 'three';
 import { ThreeContext } from '../../../shared/services/three-context';
+import { WindowSwitch } from '../../../shared/services/window-switch';
 
 @Component({
   selector: 'app-view-cube',
@@ -11,15 +12,16 @@ import { ThreeContext } from '../../../shared/services/three-context';
 })
 export class ViewCube implements OnInit, OnDestroy {
   private three = inject(ThreeContext);
+  private windowSwitch = inject(WindowSwitch);
 
   private miniScene = new THREE.Scene();
   private miniCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
   private cube!: THREE.Mesh;
 
   private cubeSize = 2;
-  private distance = this.cubeSize * 2.8;
+  private distance = this.cubeSize * 3;
 
-  private size = 140;
+  private size = 120;
 
   ngOnInit() {
     this.miniCamera.position.set(0, 0, this.distance);
@@ -71,6 +73,8 @@ export class ViewCube implements OnInit, OnDestroy {
   }
 
   private render() {
+    if (!this.windowSwitch.isCubeVisible()) return;
+
     if (!this.three.renderer || !this.three.camera || !this.cube) return;
 
     // Sync rotation – invert so cube shows **world** orientation
@@ -79,7 +83,7 @@ export class ViewCube implements OnInit, OnDestroy {
     const renderer = this.three.renderer;
     const canvas = renderer.domElement;
 
-    const x = 8; // padding from left
+    const x = 4; // padding from left
     const y = canvas.clientHeight - this.size - x; // padding from top
 
     // Preserve main depth buffer, only clear depth for this mini render
