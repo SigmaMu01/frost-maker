@@ -14,6 +14,10 @@ export class CameraControl {
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
 
+  private pointerDownPos = new THREE.Vector2();
+  private pointerUpPos = new THREE.Vector2();
+  private dragThreshold = 4; // Pixel threshold for move/select
+
   readonly fov = signal<number>(60);
 
   private isDragging = false; // Differentiate between camera control and mouse click on interactive elements
@@ -35,43 +39,53 @@ export class CameraControl {
   }
 
   raycast() {
-    // Mouse click control
     this.raycaster.setFromCamera(this.mouse, this.three.camera);
 
     const intersects = this.raycaster.intersectObjects(this.three.scene.children, true);
 
-    if (!intersects.length) return;
+    // Handle VOID click
+    if (!intersects.length) {
+      this.mapWorker.clearSelection();
+      return;
+    }
 
-    const hit = intersects[0].object;
+    // Find first relevant hit
+    const hit = intersects.find((i) => i.object.userData?.['type'] === 'tempChain');
 
-    if (hit.userData?.['type'] === 'tempChain') {
-      // console.log('Selected temp chain:', hit.userData['id']);
-      this.mapWorker.setSelectedObjectId(hit.userData['id']);
-
-      // Example highlight
-      // const mat = hit.material as THREE.MeshBasicMaterial;
-      // mat.color.set(0xff0000);
+    if (hit) {
+      this.mapWorker.setSelectedObjectId(hit.object.userData['id']);
     } else {
       this.mapWorker.clearSelection();
     }
   }
 
-  onPointerDown = () => {
+  onPointerDown = (event: PointerEvent) => {
     this.isDragging = false;
+
+    this.pointerDownPos.set(event.clientX, event.clientY);
   };
 
-  onPointerMove = () => {
-    this.isDragging = true;
+  onPointerMove = (event: PointerEvent) => {
+    this.pointerUpPos.set(event.clientX, event.clientY);
+
+    const dx = this.pointerUpPos.x - this.pointerDownPos.x;
+    const dy = this.pointerUpPos.y - this.pointerDownPos.y;
+
+    const distanceSq = dx * dx + dy * dy;
+
+    if (distanceSq > this.dragThreshold * this.dragThreshold) {
+      this.isDragging = true;
+    }
   };
 
   onPointerUp = (event: PointerEvent) => {
-    if (this.isDragging) return; // User was rotating camera
-
     const canvas = this.three.renderer.domElement;
     const rect = canvas.getBoundingClientRect();
 
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    if (this.isDragging) return;
 
     this.raycast();
   };

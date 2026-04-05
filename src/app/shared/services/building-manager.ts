@@ -5,8 +5,8 @@ import { TempProbe } from '../../core/models/probe';
 import { TemperatureControl } from './temperature-control';
 
 const FLOOR_HEIGHT = 2.7;
-const SUPPORT_LIFT_Y = 0.3; // Lift building by 30 cm to account for bearing piles
-const SUPPORT_HEIGHT = 2.3;
+const SUPPORT_LIFT_Y = 0; // Lift building by 30 cm to account for bearing piles
+const SUPPORT_HEIGHT = 2.7;
 const PX_PER_M = 100; // Pixels per meter (svg convert)
 
 const textureLoader = new THREE.TextureLoader();
@@ -20,7 +20,7 @@ const topMaterial = new THREE.MeshStandardMaterial({
 const bottomMaterial = new THREE.MeshStandardMaterial({
   color: 0x666666,
   transparent: false,
-  opacity: 1, // 👈 fully visible base
+  opacity: 1, // Fully visible base
 });
 bottomMaterial.polygonOffset = true;
 bottomMaterial.polygonOffsetFactor = 1;
@@ -229,7 +229,6 @@ export class BuildingManager {
     const height = this.floorNum() * FLOOR_HEIGHT;
 
     this.buildingMesh = this.createShape(shape, height, buildingMaterials);
-    // this.buildingMesh.position.y = height / 2 + SUPPORT_LIFT_Y; // Adjust for building height
     this.buildingMesh.position.y = height + SUPPORT_LIFT_Y; // Adjust for building height
 
     return this.buildingMesh;
@@ -247,8 +246,6 @@ export class BuildingManager {
       bevelEnabled: false,
     });
 
-    // newGeometry.center();
-
     this.buildingMesh.geometry = newGeometry;
 
     const height = this.floorNum() * FLOOR_HEIGHT;
@@ -264,28 +261,6 @@ export class BuildingManager {
 
     return supportMesh;
   }
-
-  // createTempChain(c: { id: string; x: number; y: number }) {
-  //   const height = 12;
-  //   const radius = 0.2;
-  //   const cylinder = new THREE.CylinderGeometry(radius, radius, height, 64, 1, true);
-
-  //   const tempMaterial = new THREE.MeshBasicMaterial({
-  //     color: 0x00ffff,
-  //     transparent: true,
-  //     opacity: 0.9,
-  //     side: THREE.DoubleSide,
-  //   });
-
-  //   const tempChain = new THREE.Mesh(cylinder, tempMaterial);
-  //   tempChain.position.set(c.x, -height / 2, c.y);
-  //   tempChain.userData = {
-  //     type: 'tempChain',
-  //     id: c.id, // Temp chain id
-  //   };
-
-  //   return tempChain;
-  // }
 
   createTempChain(c: { id: string; x: number; y: number }, minTemp: number, maxTemp: number, probes: TempProbe[]) {
     const height = 12;

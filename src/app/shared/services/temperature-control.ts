@@ -106,44 +106,67 @@ export class TemperatureControl {
     }
   }
 
+  // Monotonic cubic interpolation (PCHIP)
   interpolateTemp(probes: TempProbe[], depth: number): number | null {
     if (!probes || probes.length === 0) return 0;
 
-    // Ensure sorted (critical)
     const sorted = probes.slice().sort((a, b) => a.depth - b.depth);
+    const n = sorted.length;
+
+    if (n === 1) return sorted[0].temp;
 
     const first = sorted[0];
-    const last = sorted[sorted.length - 1];
-
-    // // Clamp before first
-    // if (depth <= first.depth) {
-    //   return first.temp;
-    // }
-
-    // // Clamp after last
-    // if (depth >= last.depth) {
-    //   return last.temp;
-    // }
+    const last = sorted[n - 1];
 
     if (depth < first.depth || depth > last.depth) {
       return null;
     }
 
-    // Normal interpolation
-    for (let i = 0; i < sorted.length - 1; i++) {
+    // Step 1: compute secant slopes
+    const d: number[] = [];
+    for (let i = 0; i < n - 1; i++) {
+      const dx = sorted[i + 1].depth - sorted[i].depth;
+      const dy = sorted[i + 1].temp - sorted[i].temp;
+      d.push(dy / dx);
+    }
+
+    // Step 2: compute tangents (PCHIP)
+    const m: number[] = new Array(n);
+
+    // Endpoints
+    m[0] = d[0];
+    m[n - 1] = d[n - 2];
+
+    // Internal points
+    for (let i = 1; i < n - 1; i++) {
+      if (d[i - 1] * d[i] <= 0) {
+        m[i] = 0;
+      } else {
+        m[i] = (d[i - 1] + d[i]) / 2;
+      }
+    }
+
+    // Step 3: find segment
+    for (let i = 0; i < n - 1; i++) {
       const a = sorted[i];
       const b = sorted[i + 1];
 
       if (depth >= a.depth && depth <= b.depth) {
-        const t = (depth - a.depth) / (b.depth - a.depth);
-        return a.temp + t * (b.temp - a.temp);
+        const h = b.depth - a.depth;
+        const t = (depth - a.depth) / h;
+
+        // Hermite basis
+        const h00 = 2 * t ** 3 - 3 * t ** 2 + 1;
+        const h10 = t ** 3 - 2 * t ** 2 + t;
+        const h01 = -2 * t ** 3 + 3 * t ** 2;
+        const h11 = t ** 3 - t ** 2;
+
+        return h00 * a.temp + h10 * h * m[i] + h01 * b.temp + h11 * h * m[i + 1];
       }
     }
 
-    // Should never happen, but safe fallback
     return last.temp;
   }
-
   getECMWFColor(temp: number, min: number, max: number, steps = 12) {
     // Guard against degenerate range
     if (Math.abs(max - min) < 1e-6) {

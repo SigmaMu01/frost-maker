@@ -140,6 +140,7 @@ export class Viewport implements OnDestroy {
 
     // Create grid on floor level under the building
     const grid = this.buildingManager.createRectangularGrid(building);
+    grid.raycast = () => {}; // Pass through when clicking on temp chains
     this.three.scene.add(grid);
 
     // Temp chains

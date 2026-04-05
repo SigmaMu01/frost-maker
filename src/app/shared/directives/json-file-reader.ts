@@ -33,8 +33,8 @@ export class JsonFileReader implements BasicFileReader {
 
           this.dataConnector.setTemperatureTemplate(dataJSON);
 
-          this.temperatureControl.setTempBounds(this.dataConnector.getAllData().temperatureValue, 3); // Set temp min and max after data load
-          // this.temperatureControl.setTempBounds(this.dataConnector.getTimeFrameData(), 1);
+          // this.temperatureControl.setTempBounds(this.dataConnector.getAllData().temperatureValue, 3); // Set temp min and max after data load
+          this.temperatureControl.setTempBounds(this.dataConnector.getTimeFrameData(), 1);
           // if (isDevMode()) console.log('Parsed JSON:', dataJSON);
         } catch (error) {
           console.error('Error parsing JSON:', error);
