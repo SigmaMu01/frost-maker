@@ -240,7 +240,7 @@ export class TemperatureControl {
       }
     }
 
-    console.log('Found zeroes: ', result);
+    // console.log('Found zeroes: ', result);
     return result;
   }
 }

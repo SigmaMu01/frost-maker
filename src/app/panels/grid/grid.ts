@@ -5,6 +5,7 @@ import {
   ElementRef,
   HostListener,
   inject,
+  untracked,
   viewChild,
   ViewChild,
 } from '@angular/core';
@@ -14,6 +15,8 @@ import { Canvas, Point, Line, TPointerEventInfo, TPointerEvent, TEvent, FabricOb
 import { MapWorker } from '../../shared/services/map-worker';
 import { drawBuilding, drawEmptyTempChains, drawSupports, drawTempChains } from './grid-draw';
 import { DataConnector } from '../../shared/services/data-connector';
+import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
+import { TemperatureControl } from '../../shared/services/temperature-control';
 
 interface FabricObjectWithID extends FabricObject {
   id?: string;
@@ -28,6 +31,8 @@ interface FabricObjectWithID extends FabricObject {
 export class Grid implements AfterViewInit {
   readonly mapWorker = inject(MapWorker);
   readonly dataConnector = inject(DataConnector); // Required to check if temp chain has data
+  readonly tempCloudWorker = inject(TempCloudWorker);
+  readonly tempControlControl = inject(TemperatureControl);
 
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('fabricCanvas');
   containerRef = viewChild.required<ElementRef<HTMLDivElement>>('fabricContainer');
@@ -42,9 +47,25 @@ export class Grid implements AfterViewInit {
   constructor() {
     effect(() => {
       if (this.mapWorker.isSVGLoaded() && this.dataConnector.isJSONLoaded()) {
-        this.drawSVG();
+        untracked(() => this.drawSVG());
+        // requestAnimationFrame(() => {
+        //   untracked(() => this.tempCloudWorker.drawTemperatureSlice());
+        // });
       }
     });
+
+    // effect(() => {
+    //   if (
+    //     // this.mapWorker.isSVGLoaded() &&
+    //     this.mapWorker.isSVGRendered() &&
+    //     this.dataConnector.isJSONLoaded() &&
+    //     this.tempCloudWorker.isBinLoaded()
+    //   ) {
+    //     untracked(() => {
+    //       this.tempCloudWorker.drawTemperatureSlice();
+    //     });
+    //   }
+    // });
   }
 
   ngAfterViewInit(): void {
@@ -124,6 +145,8 @@ export class Grid implements AfterViewInit {
     });
 
     this.canvas.requestRenderAll();
+
+    this.mapWorker.isSVGRendered.set(true);
   }
 
   // ----------------------

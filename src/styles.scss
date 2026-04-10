@@ -448,6 +448,35 @@ h5,
   border-top: 1px solid var(--color-text-extra);
 }
 
+.input-range {
+  // position: absolute;
+  height: 5px;
+  padding: 0 !important;
+
+  // top: 2px;
+  // left: 50%;
+  // transform: translateX(-50%);
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 15px;
+    width: 15px;
+    // background: #04AA6D;
+    // border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /* 3. Style for Firefox */
+  &::-moz-range-thumb {
+    height: 15px;
+    width: 15px;
+    // background: #04AA6D;
+    // border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+}
+
 @media screen and (max-width: 991px) {
 }
 

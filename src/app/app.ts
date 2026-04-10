@@ -22,7 +22,6 @@ export class App {
   constructor() {
     effect(() => {
       const v = this.windowSwitch.showViewport();
-      console.log(v);
     });
   }
 }

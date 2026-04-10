@@ -28,5 +28,19 @@
       <button (click)="toggleColorTheme()">COLOR</button>
     </div>
   </div>
+  <div class="panel">
+    <div>
+      <input
+        class="input-range"
+        type="range"
+        min="0"
+        max="24"
+        step="1"
+        [value]="sliceValue()"
+        (input)="sliceValue.set($any($event.target).value)"
+      />
+    </div>
+  </div>
 </div>
+
 }

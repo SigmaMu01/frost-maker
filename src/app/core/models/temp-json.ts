@@ -4,6 +4,11 @@ export interface MonitoringDataJSON {
   temperatureValue: [label: string, ...values: (number | null)[]][];
 }
 
+export interface MonitoringDataJSONWithCloud extends MonitoringDataJSON {
+  // Interpolated coordinates for bin file
+  resolution?: number[];
+}
+
 export interface TempDataJSON {
   // Cleaned temperature data
   utcTimestamp: string[];

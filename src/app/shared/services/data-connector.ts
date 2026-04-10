@@ -23,7 +23,7 @@ export class DataConnector {
 
   setTemperatureTemplate(template: MonitoringDataJSON) {
     this._tempData.set(cleanMonitoringData(template));
-    if (isDevMode()) console.log('Cleaned JSON:', this._tempData);
+    if (isDevMode()) console.log('Cleaned JSON:', this._tempData());
   }
 
   clearTemperatureTemplate() {

@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { INode } from 'svgson';
 import { isValidSVG } from '../../core/models/building';
 import { Canvas, Group, Line } from 'fabric';
@@ -13,9 +13,14 @@ export class MapWorker {
 
   readonly selectedTempChainId = signal<string | null>(null); // Selected temperature chain
   readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
+  readonly isSVGRendered = signal(false); // Signal to allow the slice to draw if loaded in the wrong order
+
+  readonly getCanvas = computed(() => this.canvas);
 
   setSVGTemplate(template: INode) {
     this.isSVGLoaded.set(false);
+    this.isSVGRendered.set(false);
+
     if (isValidSVG(template)) {
       this._svgData = template;
     }
@@ -31,6 +36,11 @@ export class MapWorker {
     this.drawGrid();
   }
 
+  unloadTemplate() {
+    this.isSVGLoaded.set(false);
+    this.isSVGRendered.set(false);
+  }
+
   getSVGChildren(): INode[] {
     return this._svgData?.children ?? [];
   }
@@ -41,6 +51,11 @@ export class MapWorker {
 
   clearSelection() {
     this.selectedTempChainId.set(null);
+  }
+
+  getBounds() {
+    const viewBox = this._svgData?.attributes['viewBox'].split(' ')!;
+    return { x: Number(viewBox[2]), y: Number(viewBox[3]) };
   }
 
   // -----------------------

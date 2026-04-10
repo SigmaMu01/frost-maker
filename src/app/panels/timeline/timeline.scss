@@ -28,35 +28,6 @@
     flex-direction: column;
     flex-wrap: nowrap;
     gap: 0.25rem;
-
-    .input-range {
-      // position: absolute;
-      height: 5px;
-      padding: 0;
-
-      // top: 2px;
-      // left: 50%;
-      // transform: translateX(-50%);
-
-      &::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        height: 15px;
-        width: 15px;
-        // background: #04AA6D;
-        // border-radius: 50%;
-        cursor: pointer;
-      }
-
-      /* 3. Style for Firefox */
-      &::-moz-range-thumb {
-        height: 15px;
-        width: 15px;
-        // background: #04AA6D;
-        // border-radius: 50%;
-        cursor: pointer;
-        border: none;
-      }
-    }
   }
 
   .player {

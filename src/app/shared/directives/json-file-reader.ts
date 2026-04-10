@@ -3,8 +3,9 @@ import { isDevMode, output } from '@angular/core';
 
 import { BasicFileReader } from '../models/file-reader';
 import { DataConnector } from '../services/data-connector';
-import { MonitoringDataJSON } from '../../core/models/temp-json';
+import { MonitoringDataJSON, MonitoringDataJSONWithCloud } from '../../core/models/temp-json';
 import { TemperatureControl } from '../services/temperature-control';
+import { TempCloudWorker } from '../services/temp-cloud-worker';
 
 @Directive({
   selector: '[appJsonFileReader]',
@@ -15,6 +16,7 @@ import { TemperatureControl } from '../services/temperature-control';
 })
 export class JsonFileReader implements BasicFileReader {
   private readonly dataConnector = inject(DataConnector);
+  private readonly tempCloudWorker = inject(TempCloudWorker);
   private readonly temperatureControl = inject(TemperatureControl);
   // readonly data = output<INode>();
 
@@ -29,7 +31,13 @@ export class JsonFileReader implements BasicFileReader {
       reader.onload = (e: any) => {
         this.dataConnector.isJSONLoaded.set(false);
         try {
-          const dataJSON = JSON.parse(e.target.result as string) as MonitoringDataJSON;
+          const dataJSON: MonitoringDataJSONWithCloud = JSON.parse(e.target.result as string) as MonitoringDataJSON;
+
+          if (dataJSON.resolution) {
+            // Load interpolated cloud shape metadata if exists
+            const shape = [...dataJSON.resolution, dataJSON.utcTimestamp.length];
+            this.tempCloudWorker.loadShape(shape);
+          }
 
           this.dataConnector.setTemperatureTemplate(dataJSON);
 

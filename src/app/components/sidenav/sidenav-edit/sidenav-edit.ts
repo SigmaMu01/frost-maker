@@ -7,24 +7,28 @@ import { MapWorker } from '../../../shared/services/map-worker';
 import { DataConnector } from '../../../shared/services/data-connector';
 import { FormsModule } from '@angular/forms';
 import { TemperatureControl } from '../../../shared/services/temperature-control';
+import { BinFileReader } from '../../../shared/directives/bin-file-reader';
+import { TempCloudWorker } from '../../../shared/services/temp-cloud-worker';
 
 @Component({
   selector: 'app-sidenav-edit',
-  imports: [FormsModule, JsonFileReader, SvgFileReader],
+  imports: [FormsModule, JsonFileReader, SvgFileReader, BinFileReader],
   templateUrl: './sidenav-edit.html',
   styleUrl: './sidenav-edit.scss',
 })
 export class SidenavEdit {
   private readonly temperatureControl = inject(TemperatureControl);
   private readonly mapWorker = inject(MapWorker);
+  private readonly tempCloudWorker = inject(TempCloudWorker);
   private readonly dataConnector = inject(DataConnector);
 
   readonly isSubmenuOpen = input(false);
   readonly inputJson = viewChild<ElementRef>('json');
   readonly inputSvg = viewChild<ElementRef>('svg');
+  readonly inputBin = viewChild<ElementRef>('bin');
 
   minTemp = model<number>(-4);
-  maxTemp = model<number>(0.5);
+  maxTemp = model<number>(1);
 
   constructor() {
     // UI -> Service
@@ -51,6 +55,7 @@ export class SidenavEdit {
 
     const jsonInput = this.inputJson()?.nativeElement as HTMLInputElement;
     const svgInput = this.inputSvg()?.nativeElement as HTMLInputElement;
+    const binInput = this.inputBin()?.nativeElement as HTMLInputElement;
     this.dataConnector.clearTemperatureTemplate();
 
     if (jsonInput) {
@@ -60,7 +65,12 @@ export class SidenavEdit {
 
     if (svgInput) {
       svgInput.value = '';
-      this.mapWorker.isSVGLoaded.set(false);
+      this.mapWorker.unloadTemplate();
+    }
+
+    if (binInput) {
+      binInput.value = '';
+      this.tempCloudWorker.clearMetadata();
     }
   }
 
