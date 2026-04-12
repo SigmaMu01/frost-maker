@@ -75,7 +75,7 @@ export class Grid implements AfterViewInit {
     const { width, height } = container.getBoundingClientRect();
 
     this.initCanvas();
-    this.mapWorker.registerCanvas(this.canvas);
+    this.mapWorker.registerCanvas(this.canvas, this.containerRef().nativeElement);
     this.resizeCanvas();
     this.mapWorker.clearCanvas();
   }
@@ -147,6 +147,7 @@ export class Grid implements AfterViewInit {
     this.canvas.requestRenderAll();
 
     this.mapWorker.isSVGRendered.set(true);
+    this.mapWorker.fitToOutline();
   }
 
   // ----------------------
@@ -187,6 +188,10 @@ export class Grid implements AfterViewInit {
   };
 
   // ----------------------
+  // Center view
+  // ----------------------
+
+  // ----------------------
   // Zoom (wheel, cursor-centric)
   // ----------------------
   private onMouseWheel = (opt: TPointerEventInfo<WheelEvent>) => {
@@ -194,7 +199,7 @@ export class Grid implements AfterViewInit {
     let zoom = this.canvas.getZoom();
 
     zoom *= 0.999 ** evt.deltaY;
-    zoom = Math.min(Math.max(zoom, 0.2), 5);
+    zoom = Math.min(Math.max(zoom, 0.1), 5);
 
     this.canvas.zoomToPoint(new Point(evt.offsetX, evt.offsetY), zoom);
 

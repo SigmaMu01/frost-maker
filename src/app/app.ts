@@ -7,10 +7,11 @@ import { Grid } from './panels/grid/grid';
 import { Viewport } from './panels/viewport/viewport';
 import { WindowSwitch } from './shared/services/window-switch';
 import { Overlay } from './components/overlay/overlay';
+import { Help } from './panels/intro/help';
 
 @Component({
   selector: 'app-root',
-  imports: [Sidenav, Temperature, Timeline, Grid, Viewport, Overlay],
+  imports: [Sidenav, Temperature, Timeline, Grid, Viewport, Overlay, Help],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -21,7 +22,7 @@ export class App {
 
   constructor() {
     effect(() => {
-      const v = this.windowSwitch.showViewport();
+      const v = this.windowSwitch.currentWindow();
     });
   }
 }

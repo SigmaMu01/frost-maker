@@ -8,6 +8,7 @@ import { Canvas, Group, Line } from 'fabric';
 })
 export class MapWorker {
   private canvas!: Canvas; // Canvas pointer for working with objects
+  private container!: HTMLDivElement;
 
   private _svgData: INode | null = null; // Current building
 
@@ -27,8 +28,12 @@ export class MapWorker {
     this.isSVGLoaded.set(true);
   }
 
-  registerCanvas(canvas: Canvas) {
+  registerCanvas(canvas: Canvas, container?: HTMLDivElement) {
     this.canvas = canvas;
+
+    if (container) {
+      this.container = container;
+    }
   }
 
   clearCanvas() {
@@ -63,7 +68,7 @@ export class MapWorker {
   // -----------------------
   private drawGrid() {
     const gridSize = 100;
-    const extent = 5000; // virtual world size
+    const extent = 20000; // virtual world size
 
     for (let i = -extent; i <= extent; i += gridSize) {
       // vertical
@@ -84,6 +89,52 @@ export class MapWorker {
       );
     }
     // this.canvas.getObjects().forEach(obj => obj.sendToBack());
+  }
+
+  fitToOutline(padding = 40) {
+    const canvas = this.canvas;
+    const container = this.container;
+
+    const outlineNode = this.getOutlineNode();
+    if (!outlineNode) return;
+
+    // Extract rect from SVG
+    const rect = outlineNode.children.find((c) => c.name === 'rect');
+    if (!rect) return;
+
+    const x = parseFloat(rect.attributes['x']);
+    const y = parseFloat(rect.attributes['y']);
+    const w = parseFloat(rect.attributes['width']);
+    const h = parseFloat(rect.attributes['height']);
+
+    // Canvas size
+    const canvasWidth = container.clientWidth;
+    const canvasHeight = container.clientHeight;
+
+    // Compute zoom to fit
+    const zoomX = (canvasWidth - padding * 2) / w;
+    const zoomY = (canvasHeight - padding * 2) / h;
+
+    const zoom = Math.min(zoomX, zoomY);
+
+    // Clamp (optional, same as your wheel zoom)
+    const clampedZoom = Math.min(Math.max(zoom, 0.1), 5);
+
+    // Center of outline in world coords
+    const centerX = x + w / 2;
+    const centerY = y + h / 2;
+
+    // Apply zoom centered on canvas center
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]); // reset first
+    canvas.setZoom(clampedZoom);
+
+    const vpt = canvas.viewportTransform!;
+
+    // Translate so outline center aligns with canvas center
+    vpt[4] = canvasWidth / 2 - centerX * clampedZoom;
+    vpt[5] = canvasHeight / 2 - centerY * clampedZoom;
+
+    canvas.requestRenderAll();
   }
 
   getOutlineNode(): INode | null {

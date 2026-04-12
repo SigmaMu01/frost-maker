@@ -39,7 +39,7 @@ aside {
   }
 
   nav {
-    max-height: calc(100vh - 65px - 40px);
+    max-height: calc(100vh - 65px - 40px); // Height - timeline - top button
     overflow-x: clip;
     overflow-y: auto;
 

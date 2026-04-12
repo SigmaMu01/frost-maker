@@ -3,6 +3,7 @@ import { INode } from 'svgson';
 import * as THREE from 'three';
 import { TempProbe } from '../../core/models/probe';
 import { TemperatureControl } from './temperature-control';
+import { CameraControl } from '../../panels/viewport/utils/camera-control';
 
 const FLOOR_HEIGHT = 2.7;
 const SUPPORT_LIFT_Y = 0; // Lift building by 30 cm to account for bearing piles
@@ -52,6 +53,7 @@ const supportMaterial = new THREE.MeshStandardMaterial({
 })
 export class BuildingManager {
   private readonly temperatureControl = inject(TemperatureControl);
+  private readonly cameraControl = inject(CameraControl);
 
   private buildingMesh: THREE.Mesh | null = null;
   private currentShape: THREE.Shape | null = null;
@@ -326,9 +328,7 @@ export class BuildingManager {
 
       const temp = this.temperatureControl.interpolateTemp(probes, depth);
 
-      const color = temp
-        ? this.temperatureControl.getECMWFColor(temp, minTemp, maxTemp, steps)
-        : 'rgba(255, 255, 255, 63)';
+      const color = temp ? this.temperatureControl.getECMWFColor(temp, minTemp, maxTemp) : 'rgba(255, 255, 255, 63)';
 
       // Parse rgb(...)
       const match = color.match(/\d+/g)!;
@@ -414,10 +414,11 @@ export class BuildingManager {
 
     // this.three.scene.add(grid);
 
-    grid.userData = {
-      center: center,
-      size: size,
-    };
+    // grid.userData = {
+    //   center: center,
+    //   size: size,
+    // };
+    this.cameraControl.grid = { center: center, size: size };
 
     return grid;
   }

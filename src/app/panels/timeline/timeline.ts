@@ -10,10 +10,14 @@ import { DatePipe } from '@angular/common';
 })
 export class Timeline {
   private readonly dataConnector = inject(DataConnector);
+
   readonly timeFrameDates = signal<string[]>([]);
   readonly selectedTimeFrame = signal<number>(0);
 
   readonly nav = viewChild.required<ElementRef>('timelineNav');
+
+  private isDragging = false;
+  private isZooming = false;
 
   readonly isPlaying = signal(false);
   readonly fps = signal(10);
@@ -50,6 +54,8 @@ export class Timeline {
     });
 
     effect(() => {
+      if (this.isZooming) return;
+
       const index = this.selectedTimeFrame();
       const el = this.nav().nativeElement;
 
@@ -104,5 +110,71 @@ export class Timeline {
 
   prevFrame() {
     this.onSelectFrame(Math.max(this.selectedTimeFrame() - 1, 0));
+  }
+
+  // =========================
+  // Mouse control
+  // =========================
+
+  onMouseDown(event: MouseEvent) {
+    if (event.button !== 0) return; // LMB only
+    this.isDragging = true;
+    this.updateFrameFromMouse(event);
+  }
+
+  onMouseMove(event: MouseEvent) {
+    if (!this.isDragging) return;
+    this.updateFrameFromMouse(event);
+  }
+
+  onMouseUp() {
+    this.isDragging = false;
+  }
+
+  onWheel(event: WheelEvent) {
+    event.preventDefault();
+    this.isZooming = true;
+
+    const el = this.nav().nativeElement;
+
+    const rect = el.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+
+    const scrollLeft = el.scrollLeft;
+    const worldX = scrollLeft + mouseX;
+
+    const oldWidth = this.frameWidth();
+
+    const delta = Math.sign(event.deltaY);
+    const newWidth = Math.max(5, Math.min(80, oldWidth - delta * 2));
+
+    if (newWidth === oldWidth) {
+      this.isZooming = false;
+      return;
+    }
+
+    const ratio = newWidth / oldWidth;
+
+    this.frameWidth.set(newWidth);
+
+    el.scrollLeft = worldX * ratio - mouseX;
+
+    requestAnimationFrame(() => {
+      this.isZooming = false;
+    });
+  }
+
+  private updateFrameFromMouse(event: MouseEvent) {
+    const navEl = this.nav().nativeElement;
+
+    const rect = navEl.getBoundingClientRect();
+
+    const x = event.clientX - rect.left + navEl.scrollLeft;
+
+    const index = Math.floor(x / this.frameWidth());
+
+    const clamped = Math.max(0, Math.min(index, this.timeFrameDates().length - 1));
+
+    this.onSelectFrame(clamped);
   }
 }

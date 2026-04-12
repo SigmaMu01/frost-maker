@@ -81,7 +81,7 @@ export class Temperature {
 
       const temp = this.temperatureControl.interpolateTemp(this.probes(), depth);
 
-      const color = temp ? this.temperatureControl.getECMWFColor(temp, min, max, 16) : 'transparent';
+      const color = temp ? this.temperatureControl.getECMWFColor(temp, min, max) : 'transparent';
 
       // hard stop (quantized band)
       stops.push(`${color} ${percent.toFixed(2)}%`);

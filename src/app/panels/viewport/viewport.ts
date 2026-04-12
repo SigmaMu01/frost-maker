@@ -167,7 +167,7 @@ export class Viewport implements OnDestroy {
     }
 
     // Center camera on the building
-    this.cameraControl.centerCamera(grid.userData['center'], grid.userData['size']);
+    this.cameraControl.centerCamera();
   }
 
   private updateTemperatureColumns(min: number, max: number) {

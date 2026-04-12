@@ -1,9 +1,12 @@
 <app-sidenav />
 <main>
   <!-- <router-outlet /> -->
+  @if (windowSwitch.currentWindow() !== 'help') {
   <app-overlay id="canvas-legend" />
-  <app-grid [class.hidden]="windowSwitch.showViewport()" />
-  <app-viewport [class.hidden]="!windowSwitch.showViewport()" />
+  }
+  <app-help class="hidden" [class.active]="windowSwitch.currentWindow() === 'help'" />
+  <app-grid class="hidden" [class.active]="windowSwitch.currentWindow() === 'grid'" />
+  <app-viewport class="hidden" [class.active]="windowSwitch.currentWindow() === 'viewport'" />
 </main>
 <app-temperature />
 <app-timeline />

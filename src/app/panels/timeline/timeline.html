@@ -7,14 +7,14 @@
     <option value="week">Среднее за неделю</option>
     <option value="month">Среднее за месяц</option>
   </select> -->
-  <input
+  <!-- <input
     class="input-range"
     type="range"
     min="5"
     max="60"
     [value]="frameWidth()"
     (input)="frameWidth.set($any($event.target).value)"
-  />
+  /> -->
   <div class="player">
     <button (click)="goStart()">⏮</button>
     <button (click)="prevFrame()">⏪︎</button>
@@ -24,7 +24,14 @@
   </div>
 </div>
 <!-- <div> -->
-<nav #timelineNav>
+<nav
+  #timelineNav
+  (mousedown)="onMouseDown($event)"
+  (mousemove)="onMouseMove($event)"
+  (wheel)="onWheel($event)"
+  (mouseup)="onMouseUp()"
+  (mouseleave)="onMouseUp()"
+>
   <div class="labels">
     @for (item of labels(); track item.index) { @if (item.show) {
     <span class="label" [style.left.px]="item.index * frameWidth()">{{ item.date | date:'MM-dd HH:mm' }}</span>

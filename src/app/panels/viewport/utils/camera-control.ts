@@ -22,7 +22,14 @@ export class CameraControl {
 
   private isDragging = false; // Differentiate between camera control and mouse click on interactive elements
 
-  centerCamera(center: THREE.Vector3, size: THREE.Vector3) {
+  grid?: { center: THREE.Vector3; size: THREE.Vector3 }; // Center view
+
+  centerCamera() {
+    if (!this.grid) return;
+
+    const center = this.grid.center;
+    const size = this.grid.size;
+
     const maxDim = Math.max(size.x, size.y, size.z);
     const distance = maxDim * 0.75; // The distance from the camera and the building at the scene init
 

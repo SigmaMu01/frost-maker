@@ -98,7 +98,7 @@ export class SidenavEdit {
   }
 
   setSliceTempBounds() {
-    // this.temperatureControl.setTempBounds(this.dataConnector.getTimeFrameData(), 1);
+    this.temperatureControl.setTempBounds(this.tempCloudWorker.currentSlice(), 2);
   }
 
   setTimeFrameTempBounds() {

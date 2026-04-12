@@ -4,7 +4,7 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root',
 })
 export class WindowSwitch {
-  readonly showViewport = signal(false);
+  readonly currentWindow = signal<'help' | 'grid' | 'viewport'>('grid');
 
   readonly isCubeVisible = signal(true);
 

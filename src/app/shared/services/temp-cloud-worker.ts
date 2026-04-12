@@ -17,12 +17,13 @@ export class TempCloudWorker {
   private tempImage?: FabricImage;
 
   private readonly data = signal<binary3DCloudData | undefined>(undefined);
-  private readonly nx = signal<number | undefined>(undefined);
-  private readonly ny = signal<number | undefined>(undefined);
-  private readonly nz = signal<number | undefined>(undefined);
-  private readonly nt = signal<number | undefined>(undefined);
+  readonly nx = signal<number | undefined>(undefined);
+  readonly ny = signal<number | undefined>(undefined);
+  readonly nz = signal<number | undefined>(undefined);
+  readonly nt = signal<number | undefined>(undefined);
 
   readonly sliceIndex = signal<number>(0);
+  readonly currentSlice = signal<binary3DCloudData>({} as binary3DCloudData);
 
   readonly isBinLoaded = signal(false);
 
@@ -80,9 +81,9 @@ export class TempCloudWorker {
     const z = this.sliceIndex();
 
     let slice = this.getXYSlice(t, z);
+    slice = this.getSmoothedXYSlice(t, z, true); // Optional smoothing
 
-    // Optional smoothing
-    slice = this.getSmoothedXYSlice(t, z, true);
+    this.currentSlice.set(slice);
 
     const width = this.nx()!;
     const height = this.ny()!;
@@ -118,7 +119,7 @@ export class TempCloudWorker {
     const canvas = this.mapWorker.getCanvas();
 
     if (this.tempImage) {
-      console.error('All good! Update');
+      // console.log('All good! Update');
       // Update existing image
       this.tempImage.setElement(tempCanvas);
       this.tempImage.set({
@@ -129,7 +130,7 @@ export class TempCloudWorker {
       this.tempImage.dirty = true; // Force redraw
     } else {
       // Create once
-      console.error('All good! Create new');
+      // console.log('All good! Create new');
       this.tempImage = new FabricImage(tempCanvas, {
         left: 0,
         top: 0,

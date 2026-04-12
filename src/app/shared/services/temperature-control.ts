@@ -1,15 +1,35 @@
 import { Injectable, signal } from '@angular/core';
 import { TempProbe } from '../../core/models/probe';
 import { DataFrame } from '../../core/models/temp-json';
+import { binary3DCloudData } from '../../core/models/temp-cloud';
 
 type ColorStop = [number, [number, number, number]];
+
+// const ECMWF_SCALE: ColorStop[] = [
+//   [-40, [130, 0, 180]], // deep violet
+//   [-30, [0, 0, 255]], // blue
+//   [-20, [0, 120, 255]], // light blue
+//   [-10, [0, 200, 255]], // cyan
+//   [0, [0, 255, 150]], // aqua-green
+//   [10, [0, 255, 0]], // green
+//   [20, [255, 255, 0]], // yellow
+//   [30, [255, 165, 0]], // orange
+//   [40, [255, 0, 0]], // red
+//   [50, [180, 0, 0]], // dark red
+// ];
+
 const ECMWF_SCALE: ColorStop[] = [
-  [-40, [130, 0, 180]], // deep violet
-  [-30, [0, 0, 255]], // blue
-  [-20, [0, 120, 255]], // light blue
+  [-50, [130, 0, 180]], // deep violet
+  [-40, [80, 0, 215]],
+  [-35, [0, 0, 255]], // blue
+  [-30, [0, 60, 255]],
+  [-25, [0, 120, 255]], // light blue
+  [-20, [0, 160, 255]],
   [-10, [0, 200, 255]], // cyan
+  [-5, [0, 255, 235]],
   [0, [0, 255, 150]], // aqua-green
-  [10, [0, 255, 0]], // green
+  [7, [0, 255, 0]], // green
+  [13, [130, 255, 0]],
   [20, [255, 255, 0]], // yellow
   [30, [255, 165, 0]], // orange
   [40, [255, 0, 0]], // red
@@ -76,6 +96,21 @@ export class TemperatureControl {
       }
       // Slice (like frame but for x/y/z axis slice)
       case 2: {
+        function getMinMax(obj: binary3DCloudData) {
+          return {
+            min: Math.min(...obj),
+            max: Math.max(...obj),
+          };
+        }
+
+        const minMaxTemp = getMinMax(data);
+
+        const min = Math.round(Number(minMaxTemp.min) * 100) / 100;
+        const max = Math.round(Number(minMaxTemp.max) * 100) / 100;
+
+        this.minTemp.set(min);
+        this.maxTemp.set(max);
+
         break;
       }
 
@@ -167,8 +202,8 @@ export class TemperatureControl {
 
     return last.temp;
   }
-  getECMWFColor(temp: number, min: number, max: number, steps = 12) {
-    // Guard against degenerate range
+
+  getECMWFColor(temp: number, min: number, max: number, steps = 0) {
     if (Math.abs(max - min) < 1e-6) {
       const mid = ECMWF_SCALE[Math.floor(ECMWF_SCALE.length / 2)][1];
       return `rgb(${mid[0]}, ${mid[1]}, ${mid[2]})`;
@@ -176,19 +211,19 @@ export class TemperatureControl {
 
     // Normalize
     let norm = (temp - min) / (max - min);
-
-    // Clamp borders
     norm = Math.max(0, Math.min(1, norm));
 
-    // Quantize (round for better distribution)
-    const q = Math.round(norm * steps) / steps;
+    // OPTIONAL quantization (disabled by default)
+    if (steps > 0) {
+      norm = Math.round(norm * steps) / steps;
+    }
 
-    // Map into palette temperature domain
+    // Map to palette temperature domain
     const minT = ECMWF_SCALE[0][0];
     const maxT = ECMWF_SCALE[ECMWF_SCALE.length - 1][0];
-    const scaledTemp = minT + q * (maxT - minT);
+    const scaledTemp = minT + norm * (maxT - minT);
 
-    // Find segment
+    // Interpolate color
     for (let i = 0; i < ECMWF_SCALE.length - 1; i++) {
       const [t1, c1] = ECMWF_SCALE[i];
       const [t2, c2] = ECMWF_SCALE[i + 1];
@@ -202,7 +237,7 @@ export class TemperatureControl {
       }
     }
 
-    // Fallback
+    // Fallbacks
     if (scaledTemp < minT) {
       const c = ECMWF_SCALE[0][1];
       return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;

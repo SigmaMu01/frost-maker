@@ -57,4 +57,20 @@ export class SidenavView {
   toggleColorTheme() {
     this.windowSwitch.toggleTheme();
   }
+
+  centerOnObject() {
+    switch (this.windowSwitch.currentWindow()) {
+      case 'grid': {
+        this.mapWorker.fitToOutline();
+        break;
+      }
+      case 'viewport': {
+        this.cameraControl.centerCamera();
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
 }
