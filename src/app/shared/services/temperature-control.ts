@@ -97,9 +97,12 @@ export class TemperatureControl {
       // Slice (like frame but for x/y/z axis slice)
       case 2: {
         function getMinMax(obj: binary3DCloudData) {
+          const filtered = new Float32Array(
+            Array.from(obj).filter((val): val is number => val !== null && val !== undefined)
+          );
           return {
-            min: Math.min(...obj),
-            max: Math.max(...obj),
+            min: Math.min(...filtered),
+            max: Math.max(...filtered),
           };
         }
 

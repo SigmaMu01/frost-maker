@@ -13,7 +13,7 @@ import {
 // import * as fabric from 'fabric'; // To-Do: remove this in favor of minimal import like below:
 import { Canvas, Point, Line, TPointerEventInfo, TPointerEvent, TEvent, FabricObject } from 'fabric';
 import { MapWorker } from '../../shared/services/map-worker';
-import { drawBuilding, drawEmptyTempChains, drawSupports, drawTempChains } from './grid-draw';
+import { GridDraw } from './grid-draw';
 import { DataConnector } from '../../shared/services/data-connector';
 import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
 import { TemperatureControl } from '../../shared/services/temperature-control';
@@ -29,6 +29,7 @@ interface FabricObjectWithID extends FabricObject {
   styleUrl: './grid.scss',
 })
 export class Grid implements AfterViewInit {
+  readonly gridDraw = inject(GridDraw);
   readonly mapWorker = inject(MapWorker);
   readonly dataConnector = inject(DataConnector); // Required to check if temp chain has data
   readonly tempCloudWorker = inject(TempCloudWorker);
@@ -125,20 +126,20 @@ export class Grid implements AfterViewInit {
 
       switch (id) {
         case 'outline':
-          drawBuilding(this.canvas, node);
+          this.gridDraw.drawBuilding(this.canvas, node);
           break;
 
         case 'support':
-          drawSupports(this.canvas, node);
+          this.gridDraw.drawSupports(this.canvas, node);
           break;
 
         default:
           if (id.startsWith('_x5F_')) {
             const idLabel = id.substring(id.lastIndexOf('_') + 1);
             if (this.dataConnector.checkTempChainData(idLabel)) {
-              drawTempChains(this.canvas, node, idLabel);
+              this.gridDraw.drawTempChains(this.canvas, node, idLabel);
             } else {
-              drawEmptyTempChains(this.canvas, node, idLabel);
+              this.gridDraw.drawEmptyTempChains(this.canvas, node, idLabel);
             }
           }
       }

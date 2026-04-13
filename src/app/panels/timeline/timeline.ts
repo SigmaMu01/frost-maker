@@ -1,6 +1,7 @@
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { DataConnector } from '../../shared/services/data-connector';
 import { DatePipe } from '@angular/common';
+import { HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-timeline',
@@ -176,5 +177,20 @@ export class Timeline {
     const clamped = Math.max(0, Math.min(index, this.timeFrameDates().length - 1));
 
     this.onSelectFrame(clamped);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    // Ignore if user is typing in input/textarea
+    const target = event.target as HTMLElement;
+
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+
+    if (event.code === 'Space') {
+      event.preventDefault();
+      this.togglePlay();
+    }
   }
 }

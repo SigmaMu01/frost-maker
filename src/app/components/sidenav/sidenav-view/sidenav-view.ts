@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, model, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { BuildingManager } from '../../../shared/services/building-manager';
 import { FormsModule } from '@angular/forms';
 import { CameraControl } from '../../../panels/viewport/utils/camera-control';
@@ -13,16 +13,27 @@ import { TempCloudWorker } from '../../../shared/services/temp-cloud-worker';
   styleUrl: '../sidenav-edit/sidenav-edit.scss',
 })
 export class SidenavView {
-  readonly buildingManager = inject(BuildingManager);
-  readonly cameraControl = inject(CameraControl);
-  readonly mapWorker = inject(MapWorker);
-  readonly windowSwitch = inject(WindowSwitch);
+  private readonly buildingManager = inject(BuildingManager);
+  private readonly cameraControl = inject(CameraControl);
+  private readonly mapWorker = inject(MapWorker);
+  private readonly windowSwitch = inject(WindowSwitch);
   readonly tempCloudWorker = inject(TempCloudWorker);
 
   readonly isSubmenuOpen = input(false);
   readonly floorNum = model<number>(5);
   readonly fieldOfViewValue = model<number>(60);
   readonly sliceValue = signal(0);
+
+  readonly sliceMax = computed(() => {
+    switch (this.tempCloudWorker.sliceMode()) {
+      case 'xy':
+        return this.tempCloudWorker.nz()! - 1;
+      case 'xz':
+        return this.tempCloudWorker.ny()! - 1;
+      case 'yz':
+        return this.tempCloudWorker.nx()! - 1;
+    }
+  });
 
   constructor() {
     effect(() => {

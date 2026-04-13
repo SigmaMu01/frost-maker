@@ -35,11 +35,18 @@
   </div>
   <div class="panel">
     <div>
+      <button (click)="tempCloudWorker.sliceMode.set('xy')">XY</button>
+      <button (click)="tempCloudWorker.sliceMode.set('xz')">XZ</button>
+      <button (click)="tempCloudWorker.sliceMode.set('yz')">YZ</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div>
       <input
         class="input-range"
         type="range"
         min="0"
-        max="24"
+        [max]="sliceMax()"
         step="1"
         [value]="sliceValue()"
         (input)="sliceValue.set($any($event.target).value)"

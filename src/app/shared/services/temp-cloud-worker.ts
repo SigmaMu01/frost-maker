@@ -3,8 +3,9 @@ import { binary3DCloudData } from '../../core/models/temp-cloud';
 import { TemperatureControl } from './temperature-control';
 import { Canvas, FabricImage } from 'fabric';
 import { MapWorker } from './map-worker';
-import { buildImageData, printSliceMatrix } from '../../panels/grid/grid-draw';
 import { DataConnector } from './data-connector';
+import { GridDraw } from '../../panels/grid/grid-draw';
+import { PX_PER_M, TEMP_CHAIN_HEIGHT_M } from './building-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -13,8 +14,11 @@ export class TempCloudWorker {
   private readonly temperatureControl = inject(TemperatureControl);
   private readonly dataConnector = inject(DataConnector);
   private readonly mapWorker = inject(MapWorker);
+  private readonly gridDraw = inject(GridDraw);
 
   private tempImage?: FabricImage;
+
+  readonly sliceMode = signal<'xy' | 'xz' | 'yz'>('xy');
 
   private readonly data = signal<binary3DCloudData | undefined>(undefined);
   readonly nx = signal<number | undefined>(undefined);
@@ -28,16 +32,6 @@ export class TempCloudWorker {
   readonly isBinLoaded = signal(false);
 
   constructor() {
-    // effect(() => {
-    //   const jsonLoaded = this.dataConnector.isJSONLoaded();
-    //   const svgLoaded = this.mapWorker.isSVGLoaded();
-
-    //   if (!jsonLoaded || !svgLoaded) {
-    //     console.log('Tests');
-    //     this.tempImage = undefined;
-    //   }
-    // });
-
     effect(() => {
       // untracked(() => console.log(this.data()?.length, this.nx(), this.ny(), this.nz(), this.nt()));
       if (this.data() && this.nx() && this.ny() && this.nz() && this.nt()) {
@@ -47,6 +41,7 @@ export class TempCloudWorker {
 
     effect(() => {
       // Update on key values change
+      const mode = this.sliceMode();
       const min = this.temperatureControl.minTemp();
       const max = this.temperatureControl.maxTemp();
       const frame = this.dataConnector.selectedFrame();
@@ -78,31 +73,76 @@ export class TempCloudWorker {
     if (!this.isBinLoaded()) return;
 
     const t = this.dataConnector.selectedFrame();
-    const z = this.sliceIndex();
+    // const z = this.sliceIndex();
+    // let slice = this.getXYSlice(t, z);
+    const mode = this.sliceMode();
+    const i = this.sliceIndex();
 
-    let slice = this.getXYSlice(t, z);
-    slice = this.getSmoothedXYSlice(t, z, true); // Optional smoothing
+    let slice: binary3DCloudData;
+    let width: number;
+    let height: number;
+
+    if (mode === 'xy') {
+      this.mapWorker.setBuildingVisible(true); // Draw building only when xy slicing is active
+    } else {
+      this.mapWorker.setBuildingVisible(false);
+    }
+
+    switch (mode) {
+      case 'xy':
+        slice = this.getXYSlice(t, i);
+        width = this.nx()!;
+        height = this.ny()!;
+        break;
+
+      case 'xz':
+        slice = this.getXZSlice(t, i);
+        width = this.nx()!;
+        height = this.nz()!;
+        break;
+
+      case 'yz':
+        slice = this.getYZSlice(t, i);
+        width = this.ny()!;
+        height = this.nz()!;
+        break;
+    }
 
     this.currentSlice.set(slice);
 
-    const width = this.nx()!;
-    const height = this.ny()!;
+    // const width = this.nx()!;
+    // const height = this.ny()!;
 
     const min = this.temperatureControl.minTemp();
     const max = this.temperatureControl.maxTemp();
 
     // printSliceMatrix(slice, width, height);
-    // const imgData = buildImageData(slice, width, height, (temp) =>
-    //   this.temperatureControl.getECMWFColor(temp, min, max)
-    // );
-    const imgData = buildImageData(slice, width, height, (temp) =>
+    const imgData = this.gridDraw.buildImageData(slice, width, height, (temp) =>
       this.temperatureControl.getECMWFColor(temp, min, max)
     );
 
     // Scale to SVG space
     const bounds = this.mapWorker.getBounds();
-    const scaleX = bounds.x / width;
-    const scaleY = bounds.y / height;
+
+    let scaleX: number;
+    let scaleY: number;
+
+    switch (mode) {
+      case 'xy':
+        scaleX = bounds.x / this.nx()!;
+        scaleY = bounds.y / this.ny()!;
+        break;
+
+      case 'xz':
+        scaleX = bounds.x / this.nx()!;
+        scaleY = (PX_PER_M * TEMP_CHAIN_HEIGHT_M) / this.nz()!; // ← using Y space for Z visually
+        break;
+
+      case 'yz':
+        scaleX = bounds.y / this.ny()!;
+        scaleY = (PX_PER_M * TEMP_CHAIN_HEIGHT_M) / this.nz()!;
+        break;
+    }
 
     if (create) this.tempImage = undefined;
     this.updateOrCreateImage(imgData, scaleX, scaleY);
@@ -142,6 +182,8 @@ export class TempCloudWorker {
 
       canvas.add(this.tempImage);
       canvas.sendObjectToBack(this.tempImage);
+
+      this.mapWorker.tempObjects = [this.tempImage]; // Save to layer
     }
 
     canvas.requestRenderAll();
@@ -154,7 +196,7 @@ export class TempCloudWorker {
     let i = 0;
     for (let y = 0; y < this.ny()!; y++) {
       for (let x = 0; x < this.nx()!; x++) {
-        slice[i++] = this.data()![this.idx(t, x, y, z)];
+        slice[i++] = this.data()![this.idx(t, x, y, this.nz()! - 1 - z)];
       }
     }
 
@@ -162,127 +204,40 @@ export class TempCloudWorker {
   }
 
   getXZSlice(t: number, y: number): binary3DCloudData {
-    // XZ → width = nx, height = nz
-    const slice = new Float32Array(this.nx()! * this.nz()!) as binary3DCloudData;
+    const nx = this.nx()!;
+    const nz = this.nz()!;
+    const slice = new Float32Array(nx * nz) as binary3DCloudData;
 
     let i = 0;
-    for (let z = 0; z < this.nz()!; z++) {
-      for (let x = 0; x < this.nx()!; x++) {
-        slice[i++] = this.data()![this.idx(t, x, y, z)];
+    for (let z = nz - 1; z >= 0; z--) {
+      // ← fixed: nz-1 downto 0 (surface at top)
+      for (let x = 0; x < nx; x++) {
+        slice[i++] = this.data()![this.idx(t, x, this.ny()! - 1 - y, z)];
       }
     }
-
     return slice;
   }
 
   getYZSlice(t: number, x: number): binary3DCloudData {
-    // YZ → width = ny, height = nz
-    const slice = new Float32Array(this.ny()! * this.nz()!) as binary3DCloudData;
+    const ny = this.ny()!;
+    const nz = this.nz()!;
+    const nx = this.nx()!;
+
+    // Clamp x
+    x = Math.max(0, Math.min(x, nx - 1));
+
+    const slice = new Float32Array(ny * nz) as binary3DCloudData;
 
     let i = 0;
-    for (let z = 0; z < this.nz()!; z++) {
-      for (let y = 0; y < this.ny()!; y++) {
+
+    // row-major: row = z, col = y
+    for (let z = nz - 1; z >= 0; z--) {
+      for (let y = 0; y < ny; y++) {
         slice[i++] = this.data()![this.idx(t, x, y, z)];
       }
     }
 
     return slice;
-  }
-
-  // ==================================
-  // PCHIP interpolation (optional)
-  // ==================================
-
-  private pchip1D(values: Float32Array): Float32Array {
-    const n = values.length;
-    if (n < 2) return values;
-
-    const d = new Float32Array(n - 1);
-    const m = new Float32Array(n);
-
-    // Slopes
-    for (let i = 0; i < n - 1; i++) {
-      d[i] = values[i + 1] - values[i];
-    }
-
-    // Endpoints
-    m[0] = d[0];
-    m[n - 1] = d[n - 2];
-
-    // Internal tangents
-    for (let i = 1; i < n - 1; i++) {
-      if (d[i - 1] * d[i] <= 0) {
-        m[i] = 0;
-      } else {
-        m[i] = (d[i - 1] + d[i]) / 2;
-      }
-    }
-
-    // Evaluate AT ORIGINAL POINTS ONLY
-    const out = new Float32Array(n);
-
-    for (let i = 0; i < n - 1; i++) {
-      const a = values[i];
-      const b = values[i + 1];
-
-      const t = 0.5; // midpoint smoothing
-
-      const h00 = 2 * t ** 3 - 3 * t ** 2 + 1;
-      const h10 = t ** 3 - 2 * t ** 2 + t;
-      const h01 = -2 * t ** 3 + 3 * t ** 2;
-      const h11 = t ** 3 - t ** 2;
-
-      out[i] = h00 * a + h10 * m[i] + h01 * b + h11 * m[i + 1];
-    }
-
-    out[n - 1] = values[n - 1];
-
-    return out;
-  }
-
-  getSmoothedXYSlice(t: number, z: number, smooth: boolean): binary3DCloudData {
-    let slice = this.getXYSlice(t, z);
-
-    if (!smooth) return slice;
-
-    slice = this.smoothSliceX(slice, this.nx()!, this.ny()!);
-    slice = this.smoothSliceY(slice, this.nx()!, this.ny()!);
-
-    return slice;
-  }
-
-  private smoothSliceX(slice: binary3DCloudData, width: number, height: number): binary3DCloudData {
-    const out = new Float32Array(slice.length) as binary3DCloudData;
-
-    for (let y = 0; y < height; y++) {
-      const row = slice.subarray(y * width, (y + 1) * width);
-
-      const smoothed = this.pchip1D(row);
-
-      out.set(smoothed, y * width);
-    }
-
-    return out;
-  }
-
-  private smoothSliceY(slice: binary3DCloudData, width: number, height: number): Float32Array {
-    const out = new Float32Array(slice.length) as binary3DCloudData;
-
-    for (let x = 0; x < width; x++) {
-      const column = new Float32Array(height) as binary3DCloudData;
-
-      for (let y = 0; y < height; y++) {
-        column[y] = slice[y * width + x];
-      }
-
-      const smoothed = this.pchip1D(column);
-
-      for (let y = 0; y < height; y++) {
-        out[y * width + x] = smoothed[y];
-      }
-    }
-
-    return out;
   }
 
   clearMetadata() {

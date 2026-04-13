@@ -8,7 +8,8 @@ import { CameraControl } from '../../panels/viewport/utils/camera-control';
 const FLOOR_HEIGHT = 2.7;
 const SUPPORT_LIFT_Y = 0; // Lift building by 30 cm to account for bearing piles
 const SUPPORT_HEIGHT = 2.7;
-const PX_PER_M = 100; // Pixels per meter (svg convert)
+export const PX_PER_M = 100; // Pixels per meter (svg convert)
+export const TEMP_CHAIN_HEIGHT_M = 12;
 
 const textureLoader = new THREE.TextureLoader();
 
