@@ -17,6 +17,7 @@ import { GridDraw } from './grid-draw';
 import { DataConnector } from '../../shared/services/data-connector';
 import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
 import { TemperatureControl } from '../../shared/services/temperature-control';
+import { TempProber } from '../../components/temp-probe/temp-prober';
 
 interface FabricObjectWithID extends FabricObject {
   id?: string;
@@ -29,11 +30,12 @@ interface FabricObjectWithID extends FabricObject {
   styleUrl: './grid.scss',
 })
 export class Grid implements AfterViewInit {
-  readonly gridDraw = inject(GridDraw);
-  readonly mapWorker = inject(MapWorker);
-  readonly dataConnector = inject(DataConnector); // Required to check if temp chain has data
-  readonly tempCloudWorker = inject(TempCloudWorker);
-  readonly tempControlControl = inject(TemperatureControl);
+  private readonly gridDraw = inject(GridDraw);
+  private readonly mapWorker = inject(MapWorker);
+  private readonly dataConnector = inject(DataConnector); // Required to check if temp chain has data
+  private readonly tempCloudWorker = inject(TempCloudWorker);
+  // private readonly temperatureControl = inject(TemperatureControl);
+  private readonly tempProber = inject(TempProber);
 
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('fabricCanvas');
   containerRef = viewChild.required<ElementRef<HTMLDivElement>>('fabricContainer');
@@ -170,13 +172,10 @@ export class Grid implements AfterViewInit {
   private onMouseMove = (opt: TPointerEventInfo<MouseEvent>) => {
     if (!this.isPanning) {
       // If mouse hovering
-      const evt = opt.e;
-
-      const world = this.getWorldPoint(evt);
-
+      // const evt = opt.e;
+      // const world = this.getWorldPoint(evt);
       // const result = this.tempCloudWorker.getValueAt(world.x, world.y);
-
-      // this.probe.set({
+      // this.tempProber.probe.set({
       //   x: evt.clientX,
       //   y: evt.clientY,
       //   temp: result.value,
@@ -237,16 +236,17 @@ export class Grid implements AfterViewInit {
     this.mapWorker.clearSelection();
   }
 
-  private getWorldPoint(evt: MouseEvent) {
-    const rect = this.canvas.getElement().getBoundingClientRect();
+  // private getWorldPoint(evt: MouseEvent) {
+  //   return this.canvas.getViewportPoint(evt);
+  // }
 
-    const x = evt.clientX - rect.left;
-    const y = evt.clientY - rect.top;
+  // hideProbe() {
+  //   this.tempProber.isProbeVisible.set(false);
+  // }
 
-    const point = new Point(x, y);
-
-    // return this.canvas.restorePointerVpt(point);
-  }
+  // showProbe(event: MouseEvent) {
+  //   this.tempProber.isProbeVisible.set(true);
+  // }
 
   ngOnDestroy(): void {
     if (this.canvas) {

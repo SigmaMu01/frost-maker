@@ -1,7 +1,7 @@
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { binary3DCloudData } from '../../core/models/temp-cloud';
 import { TemperatureControl } from './temperature-control';
-import { Canvas, FabricImage } from 'fabric';
+import { Canvas, FabricImage, FabricObject } from 'fabric';
 import { MapWorker } from './map-worker';
 import { DataConnector } from './data-connector';
 import { GridDraw } from '../../panels/grid/grid-draw';
@@ -18,6 +18,8 @@ export class TempCloudWorker {
 
   private tempImage?: FabricImage;
 
+  private axesObjects: FabricObject[] = [];
+
   readonly sliceMode = signal<'xy' | 'xz' | 'yz'>('xy');
 
   private readonly data = signal<binary3DCloudData | undefined>(undefined);
@@ -26,12 +28,18 @@ export class TempCloudWorker {
   readonly nz = signal<number | undefined>(undefined);
   readonly nt = signal<number | undefined>(undefined);
 
-  readonly sliceIndex = signal<number>(0);
+  readonly sliceIndexes = signal<{ xy: number; xz: number; yz: number }>({ xy: 0, xz: 0, yz: 0 });
+  readonly sliceIndex = computed(() => this.sliceIndexes()[this.sliceMode()]);
   readonly currentSlice = signal<binary3DCloudData>({} as binary3DCloudData);
 
   readonly isBinLoaded = signal(false);
 
   constructor() {
+    effect(() => {
+      const slice = this.sliceMode();
+      this.fitToTemperatureSlice();
+    });
+
     effect(() => {
       // untracked(() => console.log(this.data()?.length, this.nx(), this.ny(), this.nz(), this.nt()));
       if (this.data() && this.nx() && this.ny() && this.nz() && this.nt()) {
@@ -145,7 +153,9 @@ export class TempCloudWorker {
     }
 
     if (create) this.tempImage = undefined;
+
     this.updateOrCreateImage(imgData, scaleX, scaleY);
+    this.drawAxes(width, height, scaleX, scaleY);
   }
 
   private updateOrCreateImage(imageData: ImageData, scaleX: number, scaleY: number) {
@@ -187,6 +197,44 @@ export class TempCloudWorker {
     }
 
     canvas.requestRenderAll();
+  }
+
+  fitToTemperatureSlice(padding = 40) {
+    if (!this.tempImage) return;
+
+    const mode = this.sliceMode();
+
+    const bounds = this.mapWorker.getBounds();
+
+    let width: number;
+    let height: number;
+
+    switch (mode) {
+      case 'xy':
+        width = bounds.x;
+        height = bounds.y;
+        break;
+
+      case 'xz':
+        width = bounds.x;
+        height = PX_PER_M * TEMP_CHAIN_HEIGHT_M;
+        break;
+
+      case 'yz':
+        width = bounds.y;
+        height = PX_PER_M * TEMP_CHAIN_HEIGHT_M;
+        break;
+    }
+
+    this.mapWorker.fitToBounds(
+      {
+        minX: 0,
+        minY: 0,
+        maxX: width,
+        maxY: height,
+      },
+      padding
+    );
   }
 
   getXYSlice(t: number, z: number): binary3DCloudData {
@@ -241,50 +289,92 @@ export class TempCloudWorker {
     return slice;
   }
 
-  getValueAt(worldX: number, worldY: number) {
+  // getValueAt(worldX: number, worldY: number) {
+  //   const mode = this.sliceMode();
+
+  //   const nx = this.nx()!;
+  //   const ny = this.ny()!;
+  //   const nz = this.nz()!;
+
+  //   const bounds = this.mapWorker.getBounds();
+
+  //   let x = 0,
+  //     y = 0,
+  //     z = 0;
+
+  //   switch (mode) {
+  //     case 'xy': {
+  //       x = Math.floor((worldX / bounds.x) * nx);
+  //       y = Math.floor((worldY / bounds.y) * ny);
+  //       z = this.sliceIndex();
+  //       break;
+  //     }
+
+  //     case 'xz': {
+  //       x = Math.floor((worldX / bounds.x) * nx);
+  //       z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
+  //       y = this.sliceIndex();
+  //       break;
+  //     }
+
+  //     case 'yz': {
+  //       y = Math.floor((worldX / bounds.x) * ny);
+  //       z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
+  //       x = this.sliceIndex();
+  //       break;
+  //     }
+  //   }
+
+  //   // Clamp
+  //   x = Math.max(0, Math.min(x, nx - 1));
+  //   y = Math.max(0, Math.min(y, ny - 1));
+  //   z = Math.max(0, Math.min(z, nz - 1));
+
+  //   const value = this.data()![this.idx(this.dataConnector.selectedFrame(), x, y, z)];
+
+  //   return { x, y, z, value };
+  // }
+
+  private drawAxes(width: number, height: number, scaleX: number, scaleY: number) {
+    const canvas = this.mapWorker.getCanvas();
+
+    // Remove old axes
+    this.axesObjects.forEach((obj) => canvas.remove(obj));
+    this.axesObjects = [];
+
     const mode = this.sliceMode();
 
-    const nx = this.nx()!;
-    const ny = this.ny()!;
-    const nz = this.nz()!;
-
-    const bounds = this.mapWorker.getBounds();
-
-    let x = 0,
-      y = 0,
-      z = 0;
+    let worldWidth: number;
+    let worldHeight: number;
+    let labels: { x: string; y: string };
 
     switch (mode) {
-      case 'xy': {
-        x = Math.floor((worldX / bounds.x) * nx);
-        y = Math.floor((worldY / bounds.y) * ny);
-        z = this.sliceIndex();
+      case 'xy':
+        worldWidth = width * scaleX;
+        worldHeight = height * scaleY;
+        labels = { x: 'X (m)', y: 'Y (m)' };
         break;
-      }
 
-      case 'xz': {
-        x = Math.floor((worldX / bounds.x) * nx);
-        z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
-        y = this.sliceIndex();
+      case 'xz':
+        worldWidth = width * scaleX;
+        worldHeight = height * scaleY;
+        labels = { x: 'X (m)', y: 'Z (m)' };
         break;
-      }
 
-      case 'yz': {
-        y = Math.floor((worldX / bounds.x) * ny);
-        z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
-        x = this.sliceIndex();
+      case 'yz':
+        worldWidth = width * scaleX;
+        worldHeight = height * scaleY;
+        labels = { x: 'Y (m)', y: 'Z (m)' };
         break;
-      }
     }
 
-    // Clamp (CRITICAL)
-    x = Math.max(0, Math.min(x, nx - 1));
-    y = Math.max(0, Math.min(y, ny - 1));
-    z = Math.max(0, Math.min(z, nz - 1));
+    const objs = this.gridDraw.drawAxes(canvas, worldWidth, worldHeight, labels);
 
-    const value = this.data()![this.idx(this.dataConnector.selectedFrame(), x, y, z)];
+    this.axesObjects = objs;
+    this.mapWorker.axesObjects = this.axesObjects;
 
-    return { x, y, z, value };
+    // Ensure axes above image but below UI
+    objs.forEach((obj) => canvas.bringObjectForward(obj));
   }
 
   clearMetadata() {

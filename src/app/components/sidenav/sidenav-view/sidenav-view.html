@@ -39,12 +39,17 @@
   <div class="panel">
     <div>
       <button (click)="tempCloudWorker.sliceMode.set('xy')">XY</button>
+    </div>
+    <div>
       <button (click)="tempCloudWorker.sliceMode.set('xz')">XZ</button>
+    </div>
+    <div>
       <button (click)="tempCloudWorker.sliceMode.set('yz')">YZ</button>
     </div>
   </div>
   <div class="panel">
     <div>
+      <label for="floorNum">Положение среза:</label>
       <input
         class="input-range"
         type="range"
@@ -52,8 +57,13 @@
         [max]="sliceMax()"
         step="1"
         [value]="sliceValue()"
-        (input)="sliceValue.set($any($event.target).value)"
+        (input)="onSliceChange($event)"
       />
+    </div>
+  </div>
+  <div class="panel">
+    <div>
+      <button (click)="toggleAxes()">Отображение осей</button>
     </div>
   </div>
 </div>

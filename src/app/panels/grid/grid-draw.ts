@@ -1,7 +1,20 @@
 import { INode } from 'svgson';
-import { Canvas, Circle, Rect, FabricText, Group, Line, TOptions, FabricObjectProps, FabricImage } from 'fabric';
+import {
+  Canvas,
+  Circle,
+  Rect,
+  FabricText,
+  Group,
+  Line,
+  TOptions,
+  FabricObjectProps,
+  FabricImage,
+  FabricObject,
+  Triangle,
+} from 'fabric';
 import { inject, Injectable } from '@angular/core';
 import { MapWorker } from '../../shared/services/map-worker';
+import { PX_PER_M } from '../../shared/services/building-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -145,6 +158,172 @@ export class GridDraw {
     node.children.forEach((childNode) => {
       this.drawTempChain(canvas, childNode, id, { color: 'grey', width: 2 }, undefined, false);
     });
+  }
+
+  drawAxes(canvas: Canvas, widthPx: number, heightPx: number, labels: { x: string; y: string }): FabricObject[] {
+    const objects: FabricObject[] = [];
+
+    const AXIS_COLOR = '#aaa';
+    const AXIS_WIDTH = 8;
+    const FONT_SIZE = 54;
+
+    const STEP = 5 * PX_PER_M;
+
+    const EXT = 50;
+    const TICK_SIZE = AXIS_WIDTH * 4;
+
+    const LABEL_OFFSET_X = 70;
+    const LABEL_OFFSET_Y = 70;
+
+    // -------------------
+    // Axes (extended)
+    // -------------------
+    const xAxis = new Line([0, 0, widthPx + EXT, 0], {
+      stroke: AXIS_COLOR,
+      strokeWidth: AXIS_WIDTH,
+      selectable: false,
+      evented: false,
+    });
+
+    const yAxis = new Line([0, 0, 0, heightPx + EXT], {
+      stroke: AXIS_COLOR,
+      strokeWidth: AXIS_WIDTH,
+      selectable: false,
+      evented: false,
+    });
+
+    canvas.add(xAxis, yAxis);
+    objects.push(xAxis, yAxis);
+
+    // -------------------
+    // Arrowheads (outside slice)
+    // -------------------
+    const arrowSize = 50;
+
+    const xArrow = new Triangle({
+      left: widthPx + EXT,
+      top: 0,
+      width: arrowSize,
+      height: arrowSize,
+      fill: AXIS_COLOR,
+      angle: 90,
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+    });
+
+    const yArrow = new Triangle({
+      left: 0,
+      top: heightPx + EXT,
+      width: arrowSize,
+      height: arrowSize,
+      fill: AXIS_COLOR,
+      angle: 180,
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+    });
+
+    canvas.add(xArrow, yArrow);
+    objects.push(xArrow, yArrow);
+
+    // -------------------
+    // Axis labels (X, Y, Z)
+    // -------------------
+    const xLabel = new FabricText(labels.x, {
+      left: widthPx + EXT + 20,
+      top: -LABEL_OFFSET_X,
+      fontSize: FONT_SIZE,
+      fill: AXIS_COLOR,
+      selectable: false,
+      evented: false,
+    });
+
+    const yLabel = new FabricText(labels.y, {
+      left: -LABEL_OFFSET_Y,
+      top: heightPx + EXT + 20,
+      fontSize: FONT_SIZE,
+      fill: AXIS_COLOR,
+      selectable: false,
+      evented: false,
+    });
+
+    canvas.add(xLabel, yLabel);
+    objects.push(xLabel, yLabel);
+
+    // -------------------
+    // Origin label (single 0)
+    // -------------------
+    const originLabel = new FabricText('0', {
+      left: -LABEL_OFFSET_Y,
+      top: -LABEL_OFFSET_X,
+      fontSize: FONT_SIZE,
+      fill: AXIS_COLOR,
+      selectable: false,
+      evented: false,
+    });
+
+    canvas.add(originLabel);
+    objects.push(originLabel);
+
+    // -------------------
+    // X ticks + labels (skip 0)
+    // -------------------
+    for (let x = STEP; x <= widthPx; x += STEP) {
+      const tick = new Line([x, -TICK_SIZE / 2, x, TICK_SIZE / 2], {
+        stroke: AXIS_COLOR,
+        strokeWidth: (AXIS_WIDTH / 4) * 3,
+        selectable: false,
+        evented: false,
+      });
+
+      const label = new FabricText(String(x / PX_PER_M), {
+        left: x,
+        top: -LABEL_OFFSET_X,
+        fontSize: FONT_SIZE,
+        fill: AXIS_COLOR,
+        originX: 'center',
+        selectable: false,
+        evented: false,
+      });
+
+      canvas.add(tick, label);
+      objects.push(tick, label);
+    }
+
+    // -------------------
+    // Y ticks + labels (skip 0)
+    // -------------------
+    for (let y = STEP; y <= heightPx; y += STEP) {
+      const tick = new Line([-TICK_SIZE / 2, y, TICK_SIZE / 2, y], {
+        stroke: AXIS_COLOR,
+        strokeWidth: AXIS_WIDTH / 2,
+        selectable: false,
+        evented: false,
+      });
+
+      const label = new FabricText(String(y / PX_PER_M), {
+        left: -LABEL_OFFSET_Y,
+        top: y,
+        fontSize: FONT_SIZE,
+        fill: AXIS_COLOR,
+        originY: 'center',
+        selectable: false,
+        evented: false,
+      });
+
+      canvas.add(tick, label);
+      objects.push(tick, label);
+    }
+
+    // -------------------
+    // Bring to front
+    // -------------------
+    objects.forEach((obj) => canvas.bringObjectToFront(obj));
+
+    return objects;
   }
 
   buildImageData(slice: Float32Array, width: number, height: number, getColor: (t: number) => string): ImageData {

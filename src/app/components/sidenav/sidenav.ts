@@ -1,6 +1,6 @@
 import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { SidenavEdit } from './sidenav-edit/sidenav-edit';
-import { RouterLink } from '@angular/router';
+// import { RouterLink } from '@angular/router';
 import { SidenavView } from './sidenav-view/sidenav-view';
 import { WindowSwitch } from '../../shared/services/window-switch';
 import { SidenavSaver } from './sidenav-saver/sidenav-saver';
@@ -9,7 +9,7 @@ type sidenavState = 'help' | 'grid' | 'viewport'; // All sidenav options go here
 
 @Component({
   selector: 'app-sidenav',
-  imports: [SidenavEdit, SidenavView, RouterLink, SidenavSaver],
+  imports: [SidenavEdit, SidenavView, SidenavSaver],
   templateUrl: './sidenav.html',
   styleUrl: './sidenav.scss',
 })

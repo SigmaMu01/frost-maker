@@ -10,7 +10,7 @@ import { TempCloudWorker } from '../../../shared/services/temp-cloud-worker';
   selector: 'app-sidenav-view',
   imports: [FormsModule],
   templateUrl: './sidenav-view.html',
-  styleUrl: '../sidenav-edit/sidenav-edit.scss',
+  styleUrls: ['../sidenav-edit/sidenav-edit.scss', './sidenav-view.scss'],
 })
 export class SidenavView {
   private readonly buildingManager = inject(BuildingManager);
@@ -22,7 +22,7 @@ export class SidenavView {
   readonly isSubmenuOpen = input(false);
   readonly floorNum = model<number>(5);
   readonly fieldOfViewValue = model<number>(60);
-  readonly sliceValue = signal(0);
+  readonly sliceValue = this.tempCloudWorker.sliceIndex.bind(this.tempCloudWorker);
 
   readonly sliceMax = computed(() => {
     switch (this.tempCloudWorker.sliceMode()) {
@@ -46,9 +46,12 @@ export class SidenavView {
       this.cameraControl.fov.set(fov);
     });
 
-    effect(() => {
-      this.tempCloudWorker.sliceIndex.set(this.sliceValue() ?? 0); // Reset to default first slice on clear
-    });
+    // effect(() => {
+    //   this.tempCloudWorker.sliceIndexes.update((idxs) => ({
+    //     ...idxs,
+    //     [this.tempCloudWorker.sliceMode()]: this.sliceValue() ?? 0,
+    //   })); // Reset to default first slice on clear [this.tempCloudWorker.sliceMode()]
+    // });
   }
 
   makeBuildingTransparent() {
@@ -73,10 +76,18 @@ export class SidenavView {
     this.windowSwitch.toggleTheme();
   }
 
+  toggleAxes() {
+    this.mapWorker.toggleAxes();
+  }
+
   centerOnObject() {
     switch (this.windowSwitch.currentWindow()) {
       case 'grid': {
-        this.mapWorker.fitToOutline();
+        if (this.tempCloudWorker.isBinLoaded()) {
+          this.tempCloudWorker.fitToTemperatureSlice();
+        } else {
+          this.mapWorker.fitToOutline();
+        }
         break;
       }
       case 'viewport': {
@@ -87,5 +98,15 @@ export class SidenavView {
         break;
       }
     }
+  }
+
+  onSliceChange(event: Event) {
+    const value = Number((event.target as HTMLInputElement).value);
+    const axis = this.tempCloudWorker.sliceMode();
+
+    this.tempCloudWorker.sliceIndexes.update((idxs) => ({
+      ...idxs,
+      [axis]: value,
+    }));
   }
 }

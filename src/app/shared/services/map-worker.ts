@@ -17,6 +17,7 @@ export class MapWorker {
   buildingObjects: FabricObject[] = [];
   tempObjects: FabricObject[] = [];
   gridObjects: FabricObject[] = [];
+  axesObjects: FabricObject[] = [];
 
   readonly selectedTempChainId = signal<string | null>(null); // Selected temperature chain
   readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
@@ -110,50 +111,90 @@ export class MapWorker {
     this.canvas.requestRenderAll();
   }
 
-  fitToOutline(padding = 40) {
+  toggleAxes(visibility?: boolean) {
+    if (visibility) {
+      this.axesObjects.forEach((obj) => (obj.visible = visibility));
+    } else {
+      this.axesObjects.forEach((obj) => (obj.visible = !obj.visible));
+    }
+    this.canvas.requestRenderAll();
+  }
+
+  fitToBounds(bounds: { minX: number; minY: number; maxX: number; maxY: number }, padding = 40) {
     const canvas = this.canvas;
     const container = this.container;
 
-    const outlineNode = this.getOutlineNode();
-    if (!outlineNode) return;
-
-    // Extract rect from SVG
-    const rect = outlineNode.children.find((c) => c.name === 'rect');
-    if (!rect) return;
-
-    const x = parseFloat(rect.attributes['x']);
-    const y = parseFloat(rect.attributes['y']);
-    const w = parseFloat(rect.attributes['width']);
-    const h = parseFloat(rect.attributes['height']);
-
-    // Canvas size
     const canvasWidth = container.clientWidth;
     const canvasHeight = container.clientHeight;
 
-    // Compute zoom to fit
+    const w = bounds.maxX - bounds.minX;
+    const h = bounds.maxY - bounds.minY;
+
+    if (w <= 0 || h <= 0) return;
+
     const zoomX = (canvasWidth - padding * 2) / w;
     const zoomY = (canvasHeight - padding * 2) / h;
 
     const zoom = Math.min(zoomX, zoomY);
-
-    // Clamp (optional, same as your wheel zoom)
     const clampedZoom = Math.min(Math.max(zoom, 0.1), 5);
 
-    // Center of outline in world coords
-    const centerX = x + w / 2;
-    const centerY = y + h / 2;
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
 
-    // Apply zoom centered on canvas center
-    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]); // reset first
+    // Reset transform
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     canvas.setZoom(clampedZoom);
 
     const vpt = canvas.viewportTransform!;
 
-    // Translate so outline center aligns with canvas center
     vpt[4] = canvasWidth / 2 - centerX * clampedZoom;
     vpt[5] = canvasHeight / 2 - centerY * clampedZoom;
 
     canvas.requestRenderAll();
+  }
+
+  fitToOutline(padding = 40) {
+    const outlineNode = this.getOutlineNode();
+    if (!outlineNode) return;
+
+    let bounds: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
+
+    const rect = outlineNode.children.find((c) => c.name === 'rect');
+    if (rect) {
+      const x = parseFloat(rect.attributes['x']);
+      const y = parseFloat(rect.attributes['y']);
+      const w = parseFloat(rect.attributes['width']);
+      const h = parseFloat(rect.attributes['height']);
+
+      bounds = {
+        minX: x,
+        minY: y,
+        maxX: x + w,
+        maxY: y + h,
+      };
+    }
+
+    const polygon = outlineNode.children.find((c) => c.name === 'polygon');
+    if (polygon) {
+      const points = polygon.attributes['points']
+        .trim()
+        .split(/\s+/)
+        .map((p) => p.split(',').map(Number));
+
+      const xs = points.map((p) => p[0]);
+      const ys = points.map((p) => p[1]);
+
+      bounds = {
+        minX: Math.min(...xs),
+        minY: Math.min(...ys),
+        maxX: Math.max(...xs),
+        maxY: Math.max(...ys),
+      };
+    }
+
+    if (!bounds) return;
+
+    this.fitToBounds(bounds, padding);
   }
 
   getOutlineNode(): INode | null {
