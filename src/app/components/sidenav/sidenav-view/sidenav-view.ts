@@ -65,6 +65,10 @@ export class SidenavView {
     this.windowSwitch.toggleCube();
   }
 
+  toggleGrid() {
+    this.mapWorker.toggleGrid();
+  }
+
   toggleColorTheme() {
     this.windowSwitch.toggleTheme();
   }

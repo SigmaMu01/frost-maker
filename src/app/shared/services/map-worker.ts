@@ -2,6 +2,7 @@ import { computed, Injectable, signal } from '@angular/core';
 import { INode } from 'svgson';
 import { isValidSVG } from '../../core/models/building';
 import { Canvas, FabricObject, Group, Line } from 'fabric';
+import { PX_PER_M } from './building-manager';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ export class MapWorker {
   // Layers
   buildingObjects: FabricObject[] = [];
   tempObjects: FabricObject[] = [];
+  gridObjects: FabricObject[] = [];
 
   readonly selectedTempChainId = signal<string | null>(null); // Selected temperature chain
   readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
@@ -78,28 +80,34 @@ export class MapWorker {
   // Grid (100px mesh)
   // -----------------------
   private drawGrid() {
-    const gridSize = 100;
+    const gridSize = PX_PER_M;
     const extent = 20000; // virtual world size
 
     for (let i = -extent; i <= extent; i += gridSize) {
-      // vertical
-      this.canvas.add(
-        new Line([i, -extent, i, extent], {
-          stroke: '#ddd',
-          selectable: false,
-          evented: false,
-        })
-      );
-      // horizontal
-      this.canvas.add(
-        new Line([-extent, i, extent, i], {
-          stroke: '#ddd',
-          selectable: false,
-          evented: false,
-        })
-      );
+      const vertical = new Line([i, -extent, i, extent], {
+        stroke: '#ddd',
+        selectable: false,
+        evented: false,
+      });
+
+      this.canvas.add(vertical);
+      this.gridObjects.push(vertical);
+
+      const horizontal = new Line([-extent, i, extent, i], {
+        stroke: '#ddd',
+        selectable: false,
+        evented: false,
+      });
+
+      this.canvas.add(horizontal);
+      this.gridObjects.push(horizontal);
     }
     // this.canvas.getObjects().forEach(obj => obj.sendToBack());
+  }
+
+  toggleGrid() {
+    this.gridObjects.forEach((obj) => (obj.visible = obj.visible ? false : true));
+    this.canvas.requestRenderAll();
   }
 
   fitToOutline(padding = 40) {

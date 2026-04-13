@@ -168,29 +168,41 @@ export class Grid implements AfterViewInit {
   };
 
   private onMouseMove = (opt: TPointerEventInfo<MouseEvent>) => {
-    if (!this.isPanning) return;
+    if (!this.isPanning) {
+      // If mouse hovering
+      const evt = opt.e;
 
-    const evt = opt.e;
-    // const pointer = this.canvas.getPointer(evt);
-    const vpt = this.canvas.viewportTransform!;
+      const world = this.getWorldPoint(evt);
 
-    vpt[4] += evt.clientX - this.lastPosX;
-    vpt[5] += evt.clientY - this.lastPosY;
+      // const result = this.tempCloudWorker.getValueAt(world.x, world.y);
 
-    this.canvas.requestRenderAll();
+      // this.probe.set({
+      //   x: evt.clientX,
+      //   y: evt.clientY,
+      //   temp: result.value,
+      //   coords: result,
+      // });
+    } else {
+      // If mouse panning
 
-    this.lastPosX = evt.clientX;
-    this.lastPosY = evt.clientY;
+      const evt = opt.e;
+      // const pointer = this.canvas.getPointer(evt);
+      const vpt = this.canvas.viewportTransform!;
+
+      vpt[4] += evt.clientX - this.lastPosX;
+      vpt[5] += evt.clientY - this.lastPosY;
+
+      this.canvas.requestRenderAll();
+
+      this.lastPosX = evt.clientX;
+      this.lastPosY = evt.clientY;
+    }
   };
 
   private onMouseUp = () => {
     this.isPanning = false;
     this.canvas.selection = true;
   };
-
-  // ----------------------
-  // Center view
-  // ----------------------
 
   // ----------------------
   // Zoom (wheel, cursor-centric)
@@ -223,6 +235,17 @@ export class Grid implements AfterViewInit {
 
   private onSelectionCleared() {
     this.mapWorker.clearSelection();
+  }
+
+  private getWorldPoint(evt: MouseEvent) {
+    const rect = this.canvas.getElement().getBoundingClientRect();
+
+    const x = evt.clientX - rect.left;
+    const y = evt.clientY - rect.top;
+
+    const point = new Point(x, y);
+
+    // return this.canvas.restorePointerVpt(point);
   }
 
   ngOnDestroy(): void {

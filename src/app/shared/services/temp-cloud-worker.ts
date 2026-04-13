@@ -223,21 +223,68 @@ export class TempCloudWorker {
     const nz = this.nz()!;
     const nx = this.nx()!;
 
-    // Clamp x
     x = Math.max(0, Math.min(x, nx - 1));
 
     const slice = new Float32Array(ny * nz) as binary3DCloudData;
 
-    let i = 0;
-
-    // row-major: row = z, col = y
-    for (let z = nz - 1; z >= 0; z--) {
+    for (let z = 0; z < nz; z++) {
       for (let y = 0; y < ny; y++) {
-        slice[i++] = this.data()![this.idx(t, x, y, z)];
+        const flippedZ = nz - 1 - z;
+
+        const row = z;
+        const col = y;
+
+        slice[row * ny + col] = this.data()![this.idx(t, x, y, flippedZ)];
       }
     }
 
     return slice;
+  }
+
+  getValueAt(worldX: number, worldY: number) {
+    const mode = this.sliceMode();
+
+    const nx = this.nx()!;
+    const ny = this.ny()!;
+    const nz = this.nz()!;
+
+    const bounds = this.mapWorker.getBounds();
+
+    let x = 0,
+      y = 0,
+      z = 0;
+
+    switch (mode) {
+      case 'xy': {
+        x = Math.floor((worldX / bounds.x) * nx);
+        y = Math.floor((worldY / bounds.y) * ny);
+        z = this.sliceIndex();
+        break;
+      }
+
+      case 'xz': {
+        x = Math.floor((worldX / bounds.x) * nx);
+        z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
+        y = this.sliceIndex();
+        break;
+      }
+
+      case 'yz': {
+        y = Math.floor((worldX / bounds.x) * ny);
+        z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
+        x = this.sliceIndex();
+        break;
+      }
+    }
+
+    // Clamp (CRITICAL)
+    x = Math.max(0, Math.min(x, nx - 1));
+    y = Math.max(0, Math.min(y, ny - 1));
+    z = Math.max(0, Math.min(z, nz - 1));
+
+    const value = this.data()![this.idx(this.dataConnector.selectedFrame(), x, y, z)];
+
+    return { x, y, z, value };
   }
 
   clearMetadata() {

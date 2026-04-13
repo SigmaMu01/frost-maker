@@ -6,3 +6,14 @@ export interface TempProbe {
 export interface TempProbeCont extends TempProbe {
   y: number; // Coordinate based on where the mouse is located on top of the thermal braid
 }
+
+// export interface TempProbeCont {
+//   x: number;
+//   y: number;
+//   temp: number;
+//   coords: {
+//     x: number;
+//     y: number;
+//     z: number;
+//   };
+// }

@@ -1,5 +1,7 @@
 @if (timeFrameAvailable()) {
 <div class="panel date-time">{{selectedTimeFrameLabel() | date:'yyyy-MM-dd HH:mm'}}</div>
+} @if (tempCloudSlicingEnabled() && selectedWindow() === 'grid') {
+<div class="panel slice">Срез {{sliceMode()}}:&nbsp;&nbsp;{{sliceDistance()}}м</div>
 } @if (true) {
 <div class="panel temp-legend" [style.--gradient]="tempBorder()">
   <div class="bar"></div>

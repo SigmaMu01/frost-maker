@@ -5,8 +5,6 @@
 
   // Main class for all ui elements
   .panel {
-    --top: 10px;
-
     position: absolute;
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--color-border);
@@ -15,14 +13,30 @@
   }
 
   .date-time {
+    --top: 10px;
     --padding: 1rem;
 
-    width: 175px;
+    min-width: 175px;
     padding-left: var(--padding);
     padding-right: var(--padding);
     right: 10px;
     top: var(--top);
     text-align: right;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slice {
+    --top: 10px;
+    --padding: 1rem;
+
+    min-width: 160px;
+    padding-left: var(--padding);
+    padding-right: var(--padding);
+    left: 10px;
+    top: var(--top);
+    text-align: left;
 
     display: flex;
     flex-direction: column;
