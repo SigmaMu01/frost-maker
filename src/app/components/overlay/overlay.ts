@@ -6,10 +6,11 @@ import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
 import { PX_PER_M, TEMP_CHAIN_HEIGHT_M } from '../../shared/services/building-manager';
 import { WindowSwitch } from '../../shared/services/window-switch';
 import { MapWorker } from '../../shared/services/map-worker';
+import { TempProbe } from '../temp-probe/temp-probe';
 
 @Component({
   selector: 'app-overlay',
-  imports: [DatePipe],
+  imports: [DatePipe, TempProbe],
   templateUrl: './overlay.html',
   styleUrl: './overlay.scss',
 })

@@ -1,8 +1,11 @@
-@if (tempProber.isProbeVisible()) {
+@if (tempProber.probe().coords && tempProber.isProbeEnabled() && tempProber.isProbeVisible()) {
 <div class="probe" [style.left.px]="tempProber.probe().x" [style.top.px]="tempProber.probe().y">
-  <div>X: {{ tempProber.probe().coords.x }}</div>
-  <div>Y: {{ tempProber.probe().coords.y }}</div>
-  <div>Z: {{ tempProber.probe().coords.z }}</div>
+  <!-- <div class="probe" [style.left.px]="100" [style.top.px]="100"> -->
+  <span>X: {{ tempProber.distanceX() }} m,</span>
+  &nbsp;
+  <span>Y: {{ tempProber.distanceY() }} m,</span>
+  &nbsp;
+  <span>Z: {{ tempProber.distanceZ() }} m</span>
 
   <div>Температура: {{ tempProber.probe().temp | number:'1.2-2' }} °C</div>
 </div>

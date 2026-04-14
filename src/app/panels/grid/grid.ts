@@ -170,22 +170,35 @@ export class Grid implements AfterViewInit {
   };
 
   private onMouseMove = (opt: TPointerEventInfo<MouseEvent>) => {
+    const evt = opt.e;
+
     if (!this.isPanning) {
       // If mouse hovering
-      // const evt = opt.e;
-      // const world = this.getWorldPoint(evt);
-      // const result = this.tempCloudWorker.getValueAt(world.x, world.y);
-      // this.tempProber.probe.set({
-      //   x: evt.clientX,
-      //   y: evt.clientY,
-      //   temp: result.value,
-      //   coords: result,
-      // });
+      if (!this.tempCloudWorker.isBinLoaded()) return;
+      const world = this.getWorldPoint(evt);
+
+      // Show temperature probe overlay only if inside the slice
+      const inside = this.tempCloudWorker.isInsideSlice(world.x, world.y);
+      if (!inside) {
+        this.tempProber.isProbeVisible.set(false);
+        return;
+      }
+
+      const result = this.tempCloudWorker.getValueAt(world.x, world.y);
+
+      const rect = this.canvas.getElement().getBoundingClientRect();
+
+      this.tempProber.probe.set({
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top,
+        temp: result.value,
+        coords: result,
+      });
+
+      this.tempProber.isProbeVisible.set(true);
     } else {
       // If mouse panning
 
-      const evt = opt.e;
-      // const pointer = this.canvas.getPointer(evt);
       const vpt = this.canvas.viewportTransform!;
 
       vpt[4] += evt.clientX - this.lastPosX;
@@ -236,17 +249,18 @@ export class Grid implements AfterViewInit {
     this.mapWorker.clearSelection();
   }
 
-  // private getWorldPoint(evt: MouseEvent) {
-  //   return this.canvas.getViewportPoint(evt);
-  // }
+  private getWorldPoint(evt: MouseEvent) {
+    return this.canvas.getPointer(evt);
+  }
 
-  // hideProbe() {
-  //   this.tempProber.isProbeVisible.set(false);
-  // }
+  hideProbe() {
+    this.tempProber.isProbeVisible.set(false);
+  }
 
-  // showProbe(event: MouseEvent) {
-  //   this.tempProber.isProbeVisible.set(true);
-  // }
+  showProbe(event: MouseEvent) {
+    this.tempProber.isProbeVisible.set(true);
+    console.log('Temp probe visible!');
+  }
 
   ngOnDestroy(): void {
     if (this.canvas) {

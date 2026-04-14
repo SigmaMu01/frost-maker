@@ -129,6 +129,7 @@ export class GridDraw {
       switch (childNode.name) {
         case 'rect':
           const obj = this.drawRect(canvas, childNode, { width: 4 });
+          obj.hoverCursor = 'crosshair';
           this.mapWorker.buildingObjects.push(obj);
           break;
         // TODO: add more shapes later: circle, line, path...
@@ -141,6 +142,7 @@ export class GridDraw {
       switch (childNode.name) {
         case 'rect':
           const obj = this.drawRect(canvas, childNode, undefined, 'white');
+          obj.hoverCursor = 'pointer';
           this.mapWorker.buildingObjects.push(obj);
           break;
         // TODO: add more shapes later: circle, line, path...

@@ -1,7 +1,10 @@
 .probe {
+  --padding: 7px;
+
   position: absolute;
-  right: 100%;
-  // transform: translateX(-100%);
+  // right: 0;
+  width: fit-content;
+  transform: translate(var(--padding), calc(-100% - var(--padding)));
 
   background: rgba(0, 0, 0, 0.85);
   color: #fff;
@@ -11,7 +14,7 @@
   border-radius: 6px;
 
   pointer-events: none;
-  transform: translateY(-50%);
 
   white-space: nowrap;
+  z-index: 1000;
 }

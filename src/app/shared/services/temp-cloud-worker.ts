@@ -34,6 +34,8 @@ export class TempCloudWorker {
 
   readonly isBinLoaded = signal(false);
 
+  private debugEnabled = false;
+
   constructor() {
     effect(() => {
       const slice = this.sliceMode();
@@ -289,51 +291,95 @@ export class TempCloudWorker {
     return slice;
   }
 
-  // getValueAt(worldX: number, worldY: number) {
-  //   const mode = this.sliceMode();
+  getValueAt(worldX: number, worldY: number) {
+    const mode = this.sliceMode();
 
-  //   const nx = this.nx()!;
-  //   const ny = this.ny()!;
-  //   const nz = this.nz()!;
+    const nx = this.nx()!;
+    const ny = this.ny()!;
+    const nz = this.nz()!;
 
-  //   const bounds = this.mapWorker.getBounds();
+    const bounds = this.mapWorker.getBounds();
 
-  //   let x = 0,
-  //     y = 0,
-  //     z = 0;
+    let x = 0,
+      y = 0,
+      z = 0;
 
-  //   switch (mode) {
-  //     case 'xy': {
-  //       x = Math.floor((worldX / bounds.x) * nx);
-  //       y = Math.floor((worldY / bounds.y) * ny);
-  //       z = this.sliceIndex();
-  //       break;
-  //     }
+    switch (mode) {
+      case 'xy': {
+        x = Math.floor((worldX / bounds.x) * nx);
+        y = Math.floor((worldY / bounds.y) * ny);
+        z = nz - 1 - this.sliceIndex();
+        break;
+      }
 
-  //     case 'xz': {
-  //       x = Math.floor((worldX / bounds.x) * nx);
-  //       z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
-  //       y = this.sliceIndex();
-  //       break;
-  //     }
+      case 'xz': {
+        x = Math.floor((worldX / bounds.x) * nx);
+        z = nz - 1 - Math.floor((worldY / (PX_PER_M * TEMP_CHAIN_HEIGHT_M)) * nz);
+        y = ny - 1 - this.sliceIndex();
+        break;
+      }
 
-  //     case 'yz': {
-  //       y = Math.floor((worldX / bounds.x) * ny);
-  //       z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
-  //       x = this.sliceIndex();
-  //       break;
-  //     }
-  //   }
+      case 'yz': {
+        // y = Math.floor((worldX / bounds.x) * ny);
+        // z = nz - 1 - Math.floor((worldY / bounds.y) * nz);
+        // x = this.sliceIndex();
+        // break;
+        y = Math.floor((worldX / bounds.y) * ny); // ✔ use bounds.y
+        z = nz - 1 - Math.floor((worldY / (PX_PER_M * TEMP_CHAIN_HEIGHT_M)) * nz);
+        x = nx - 1 - this.sliceIndex();
+        break;
+      }
+    }
 
-  //   // Clamp
-  //   x = Math.max(0, Math.min(x, nx - 1));
-  //   y = Math.max(0, Math.min(y, ny - 1));
-  //   z = Math.max(0, Math.min(z, nz - 1));
+    // Clamp
+    x = Math.max(0, Math.min(x, nx - 1));
+    y = Math.max(0, Math.min(y, ny - 1));
+    z = Math.max(0, Math.min(z, nz - 1));
 
-  //   const value = this.data()![this.idx(this.dataConnector.selectedFrame(), x, y, z)];
+    this.debug('probe indices', { x, y, z });
 
-  //   return { x, y, z, value };
-  // }
+    const index = this.idx(this.dataConnector.selectedFrame(), x, y, z);
+
+    this.debug('flat index', index);
+
+    const value = this.data()![index];
+
+    this.debug('value', value);
+
+    return { x, y, z, value };
+  }
+
+  private debug(label: string, data: any) {
+    if (!this.debugEnabled) return;
+    console.log(`[TempCloud] ${label}`, data);
+  }
+
+  isInsideSlice(worldX: number, worldY: number): boolean {
+    const mode = this.sliceMode();
+    const bounds = this.mapWorker.getBounds();
+
+    let width: number;
+    let height: number;
+
+    switch (mode) {
+      case 'xy':
+        width = bounds.x;
+        height = bounds.y;
+        break;
+
+      case 'xz':
+        width = bounds.x;
+        height = PX_PER_M * TEMP_CHAIN_HEIGHT_M;
+        break;
+
+      case 'yz':
+        width = bounds.y;
+        height = PX_PER_M * TEMP_CHAIN_HEIGHT_M;
+        break;
+    }
+
+    return worldX >= 0 && worldX <= width && worldY >= 0 && worldY <= height;
+  }
 
   private drawAxes(width: number, height: number, scaleX: number, scaleY: number) {
     const canvas = this.mapWorker.getCanvas();
