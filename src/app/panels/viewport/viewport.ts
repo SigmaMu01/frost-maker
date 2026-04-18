@@ -15,10 +15,12 @@ import * as THREE from 'three';
 import { ThreeContext } from '../../shared/services/three-context';
 import { ViewCube } from './view-cube/view-cube';
 import { MapWorker } from '../../shared/services/map-worker';
-import { BuildingManager } from '../../shared/services/building-manager';
+import { BuildingManager, TEMP_CHAIN_HEIGHT_M } from '../../shared/services/building-manager';
 import { CameraControl } from './utils/camera-control';
 import { DataConnector } from '../../shared/services/data-connector';
 import { TemperatureControl } from '../../shared/services/temperature-control';
+import { IsoSurfaceWorker } from '../../shared/services/iso-surface-worker';
+import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
 
 @Component({
   selector: 'app-viewport',
@@ -33,6 +35,8 @@ export class Viewport implements OnDestroy {
   private readonly cameraControl = inject(CameraControl);
   private readonly dataConnector = inject(DataConnector);
   private readonly three = inject(ThreeContext);
+  private readonly isoSurfaceWorker = inject(IsoSurfaceWorker);
+  private readonly tempCloudWorker = inject(TempCloudWorker);
 
   container = viewChild.required<ElementRef<HTMLDivElement>>('container');
 
@@ -84,6 +88,38 @@ export class Viewport implements OnDestroy {
 
       camera.fov = fov;
       camera.updateProjectionMatrix();
+    });
+
+    effect(() => {
+      if (!this.tempCloudWorker.isBinLoaded()) return;
+
+      const data = this.tempCloudWorker['data']()!;
+      const nx = this.tempCloudWorker.nx()!;
+      const ny = this.tempCloudWorker.ny()!;
+      const nz = this.tempCloudWorker.nz()!;
+
+      const positions = this.isoSurfaceWorker.buildZeroCrossingPoints(
+        data,
+        nx,
+        ny,
+        nz,
+        (x, y, z) => this.tempCloudWorker['idx'](this.dataConnector.selectedFrame(), x, y, z),
+        0
+      );
+
+      const points = this.isoSurfaceWorker.createPointCloud(positions);
+
+      const bounds = this.mapWorker.getBounds();
+      this.isoSurfaceWorker.applyWorldTransformToPoints(points, bounds, TEMP_CHAIN_HEIGHT_M, nx, ny, nz);
+
+      points.name = 'isoSurface0C';
+
+      const old = this.three.scene.getObjectByName('isoSurface0C');
+      if (old) this.three.scene.remove(old);
+
+      this.three.scene.add(points);
+
+      console.log('Zero-crossing points:', positions.length / 3);
     });
   }
 

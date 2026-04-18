@@ -69,7 +69,7 @@ export class Temperature {
   }
 
   buildGradientFromChainFrame() {
-    const resolution = 100; // ← key parameter (50–200 is good)
+    const resolution = 100; // 50–200
     const min = this.temperatureControl.minTemp();
     const max = this.temperatureControl.maxTemp();
 
