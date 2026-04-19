@@ -6,6 +6,8 @@ import { MapWorker } from '../../../shared/services/map-worker';
 import { WindowSwitch } from '../../../shared/services/window-switch';
 import { TempCloudWorker } from '../../../shared/services/temp-cloud-worker';
 import { TempProber } from '../../temp-probe/temp-prober';
+import { toggleFlag } from '../../../core/utils/toggler';
+import { IsoSurfaceWorker } from '../../../shared/services/iso-surface-worker';
 
 @Component({
   selector: 'app-sidenav-view',
@@ -19,6 +21,7 @@ export class SidenavView {
   private readonly mapWorker = inject(MapWorker);
   private readonly windowSwitch = inject(WindowSwitch);
   private readonly tempProber = inject(TempProber);
+  private readonly isoSurfaceWorker = inject(IsoSurfaceWorker);
   readonly tempCloudWorker = inject(TempCloudWorker);
 
   readonly isSubmenuOpen = input(false);
@@ -67,11 +70,11 @@ export class SidenavView {
   }
 
   toggleCube() {
-    this.windowSwitch.toggleCube();
+    toggleFlag(this.windowSwitch.isCubeVisible);
   }
 
   toggleProbe() {
-    this.tempProber.toggleProbe();
+    toggleFlag(this.tempProber.isProbeEnabled);
   }
 
   toggleGrid() {
@@ -84,6 +87,14 @@ export class SidenavView {
 
   toggleAxes() {
     this.mapWorker.toggleAxes();
+  }
+
+  toggleIsoPoints() {
+    toggleFlag(this.isoSurfaceWorker.isIsoPointsActive);
+  }
+
+  toggleIsoMeshes() {
+    toggleFlag(this.isoSurfaceWorker.isIsoMeshesActive);
   }
 
   centerOnObject() {

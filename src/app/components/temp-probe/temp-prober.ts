@@ -27,8 +27,4 @@ export class TempProber {
     const res = TEMP_CHAIN_HEIGHT_M - (TEMP_CHAIN_HEIGHT_M / (this.tempCloudWorker.nz()! - 1)) * this.probe().coords.z;
     return Math.round(res * 100) / 100;
   });
-
-  toggleProbe() {
-    this.isProbeEnabled.update((p) => (p = p ? false : true));
-  }
 }

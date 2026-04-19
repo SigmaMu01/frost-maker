@@ -91,7 +91,11 @@ export class Viewport implements OnDestroy {
     });
 
     effect(() => {
-      if (!this.tempCloudWorker.isBinLoaded()) return;
+      if (!this.tempCloudWorker.isBinLoaded() || !this.isoSurfaceWorker.isIsoPointsActive()) {
+        const old = this.three.scene.getObjectByName('isoSurface0C');
+        if (old) this.three.scene.remove(old);
+        return;
+      }
 
       const data = this.tempCloudWorker['data']()!;
       const nx = this.tempCloudWorker.nx()!;
@@ -118,8 +122,6 @@ export class Viewport implements OnDestroy {
       if (old) this.three.scene.remove(old);
 
       this.three.scene.add(points);
-
-      console.log('Zero-crossing points:', positions.length / 3);
     });
   }
 

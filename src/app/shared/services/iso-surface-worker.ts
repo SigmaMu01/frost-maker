@@ -1,21 +1,24 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import * as THREE from 'three';
 import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js';
-import { PX_PER_M } from './building-manager';
+import { PX_PER_M, TEMP_CHAIN_HEIGHT_M } from './building-manager';
 
 @Injectable({ providedIn: 'root' })
 export class IsoSurfaceWorker {
-  // private marching?: MarchingCubes;
+  readonly isIsoPointsActive = signal(true);
+  readonly isIsoMeshesActive = signal(true);
 
-  // private material = new THREE.MeshStandardMaterial({
-  //   color: 0x00ffff,
-  //   transparent: false,
-  //   opacity: 1,
-  //   side: THREE.DoubleSide,
-  //   // depthWrite: false,
-  //   // roughness: 0.4,
-  //   // metalness: 0.1,
-  // });
+  private marching?: MarchingCubes;
+
+  private material = new THREE.MeshStandardMaterial({
+    color: 0x00ffff,
+    transparent: false,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    // depthWrite: false,
+    // roughness: 0.4,
+    // metalness: 0.1,
+  });
 
   buildZeroCrossingPoints(
     data: Float32Array,
@@ -29,6 +32,7 @@ export class IsoSurfaceWorker {
 
     const sample = (x: number, y: number, z: number) => data[idx(x, y, z)] - iso;
 
+    // 1. Interior edge crossings
     for (let z = 0; z < nz - 1; z++) {
       for (let y = 0; y < ny - 1; y++) {
         for (let x = 0; x < nx - 1; x++) {
@@ -55,6 +59,84 @@ export class IsoSurfaceWorker {
             points.push(x, y, z + t);
           }
         }
+      }
+    }
+
+    // 2. Boundary faces
+    const epsilon = 0.01;
+
+    // A. Max-X face (x = nx-1), check Y and Z directions
+    for (let z = 0; z < nz - 1; z++) {
+      for (let y = 0; y < ny - 1; y++) {
+        const x = nx - 1;
+        const v = sample(x, y, z);
+
+        // Along Y on this face
+        const vy = sample(x, y + 1, z);
+        if (v * vy < 0) {
+          const t = v / (v - vy);
+          points.push(x, y + t, z);
+        }
+
+        // Along Z on this face
+        const vz = sample(x, y, z + 1);
+        if (v * vz < 0) {
+          const t = v / (v - vz);
+          points.push(x, y, z + t);
+        }
+
+        // Exact zero at this point
+        if (Math.abs(v) <= epsilon) {
+          points.push(x, y, z);
+        }
+      }
+    }
+
+    // B. Max-Y face (y = ny-1), check X and Z
+    for (let z = 0; z < nz - 1; z++) {
+      for (let x = 0; x < nx - 1; x++) {
+        const y = ny - 1;
+        const v = sample(x, y, z);
+
+        // Along X
+        const vx = sample(x + 1, y, z);
+        if (v * vx < 0) {
+          const t = v / (v - vx);
+          points.push(x + t, y, z);
+        }
+
+        // Along Z
+        const vz = sample(x, y, z + 1);
+        if (v * vz < 0) {
+          const t = v / (v - vz);
+          points.push(x, y, z + t);
+        }
+
+        if (Math.abs(v) <= epsilon) points.push(x, y, z);
+      }
+    }
+
+    // C. Max-Z face (z = nz-1), check X and Y  ← this is the one you mentioned
+    for (let y = 0; y < ny - 1; y++) {
+      for (let x = 0; x < nx - 1; x++) {
+        const z = nz - 1;
+        const v = sample(x, y, z);
+
+        // Along X
+        const vx = sample(x + 1, y, z);
+        if (v * vx < 0) {
+          const t = v / (v - vx);
+          points.push(x + t, y, z);
+        }
+
+        // Along Y
+        const vy = sample(x, y + 1, z);
+        if (v * vy < 0) {
+          const t = v / (v - vy);
+          points.push(x, y + t, z);
+        }
+
+        if (Math.abs(v) <= epsilon) points.push(x, y, z);
       }
     }
 
@@ -135,7 +217,7 @@ export class IsoSurfaceWorker {
     // flip vertical axis
     points.scale.y *= -1;
 
-    points.position.set(0, -12, 0);
+    points.position.set(0, -TEMP_CHAIN_HEIGHT_M, 0);
   }
 
   // updateIsosurface(
