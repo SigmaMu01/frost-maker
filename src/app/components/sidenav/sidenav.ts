@@ -5,7 +5,7 @@ import { SidenavView } from './sidenav-view/sidenav-view';
 import { WindowSwitch } from '../../shared/services/window-switch';
 import { SidenavSaver } from './sidenav-saver/sidenav-saver';
 
-type sidenavState = 'help' | 'grid' | 'viewport'; // All sidenav options go here
+type sidenavState = 'help' | 'grid' | 'viewport' | 'charts'; // All sidenav options go here
 
 @Component({
   selector: 'app-sidenav',
@@ -42,6 +42,9 @@ export class Sidenav {
         break;
       case 'viewport':
         this.windowSwitch.currentWindow.set('viewport');
+        break;
+      case 'charts':
+        this.windowSwitch.currentWindow.set('charts');
         break;
       default:
         this.windowSwitch.currentWindow.set('grid');

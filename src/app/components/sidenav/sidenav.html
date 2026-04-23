@@ -18,6 +18,10 @@
       <img src="icons/viewport.svg" />
       Визуализация
     </a>
+    <a class="button" (click)="onChangeSelectedSidenavOption('charts')">
+      <img src="icons/charts.svg" />
+      График
+    </a>
     <!-- <app-sidenav-view [isSubmenuOpen]="selectedSidenavOption() === 'view' && isSidenavOpen()" /> -->
     <app-sidenav-edit [isSubmenuOpen]="isSidenavOpen()" />
     <app-sidenav-view [isSubmenuOpen]="isSidenavOpen()" />

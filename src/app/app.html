@@ -1,12 +1,16 @@
 <app-sidenav />
 <main>
   <!-- <router-outlet /> -->
-  @if (windowSwitch.currentWindow() !== 'help') {
+  @if (!['help', 'charts'].includes(windowSwitch.currentWindow())) {
   <app-overlay id="canvas-legend" />
   }
   <app-help class="hidden" [class.active]="windowSwitch.currentWindow() === 'help'" />
   <app-grid class="hidden" [class.active]="windowSwitch.currentWindow() === 'grid'" />
   <app-viewport class="hidden" [class.active]="windowSwitch.currentWindow() === 'viewport'" />
+  <app-charts class="hidden" [class.active]="windowSwitch.currentWindow() === 'charts'" />
 </main>
+@if (!['help', 'charts'].includes(windowSwitch.currentWindow())) {
 <app-temperature />
+} @if (!['help'].includes(windowSwitch.currentWindow())) {
 <app-timeline />
+}

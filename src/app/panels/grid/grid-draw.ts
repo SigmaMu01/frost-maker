@@ -22,7 +22,13 @@ import { PX_PER_M } from '../../shared/services/building-manager';
 export class GridDraw {
   readonly mapWorker = inject(MapWorker);
 
-  private drawRect(canvas: Canvas, node: INode, stroke?: { width?: number; color?: string }, fillColor?: string) {
+  private drawRect(
+    canvas: Canvas,
+    node: INode,
+    stroke?: { width?: number; color?: string },
+    fillColor?: string,
+    selectable?: boolean
+  ) {
     const attrs = node.attributes || {};
     const rect = new Rect({
       left: parseFloat(attrs['x'] ?? '0'),
@@ -34,7 +40,7 @@ export class GridDraw {
       strokeWidth: stroke?.width ?? 1,
       originX: 'left',
       originY: 'top',
-      selectable: false,
+      selectable: selectable ?? false,
     });
 
     canvas.add(rect);
@@ -115,11 +121,12 @@ export class GridDraw {
       hoverCursor: 'pointer', // Show pointer cursor on hover
     });
 
-    // Preserve SVG identifier for selection reference
-    (group as any).id = id;
-
     canvas.add(group);
     this.mapWorker.buildingObjects.push(group);
+
+    // Preserve SVG identifier for selection reference
+    (group as any).id = id;
+    (group as any).customType = 'temp';
   }
 
   //----------------------------------------
@@ -137,15 +144,19 @@ export class GridDraw {
     });
   }
 
-  drawSupports(canvas: Canvas, node: INode) {
-    node.children.forEach((childNode) => {
-      switch (childNode.name) {
-        case 'rect':
-          const obj = this.drawRect(canvas, childNode, undefined, 'white');
-          obj.hoverCursor = 'pointer';
-          this.mapWorker.buildingObjects.push(obj);
-          break;
-        // TODO: add more shapes later: circle, line, path...
+  drawPiles(canvas: Canvas, node: INode) {
+    node.children.forEach((childNode, i) => {
+      if (childNode.name === 'rect') {
+        const obj = this.drawRect(canvas, childNode, undefined, 'white', true);
+
+        const id = `pile_${i}`;
+
+        (obj as any).id = id;
+        (obj as any).customType = 'pile';
+
+        obj.hoverCursor = 'pointer';
+
+        this.mapWorker.pileObjects.push(obj);
       }
     });
   }

@@ -91,37 +91,86 @@ export class Viewport implements OnDestroy {
     });
 
     effect(() => {
-      if (!this.tempCloudWorker.isBinLoaded() || !this.isoSurfaceWorker.isIsoPointsActive()) {
-        const old = this.three.scene.getObjectByName('isoSurface0C');
-        if (old) this.three.scene.remove(old);
-        return;
-      }
-
-      const data = this.tempCloudWorker['data']()!;
-      const nx = this.tempCloudWorker.nx()!;
-      const ny = this.tempCloudWorker.ny()!;
-      const nz = this.tempCloudWorker.nz()!;
-
-      const positions = this.isoSurfaceWorker.buildZeroCrossingPoints(
-        data,
-        nx,
-        ny,
-        nz,
-        (x, y, z) => this.tempCloudWorker['idx'](this.dataConnector.selectedFrame(), x, y, z),
-        0
-      );
-
-      const points = this.isoSurfaceWorker.createPointCloud(positions);
-
-      const bounds = this.mapWorker.getBounds();
-      this.isoSurfaceWorker.applyWorldTransformToPoints(points, bounds, TEMP_CHAIN_HEIGHT_M, nx, ny, nz);
-
-      points.name = 'isoSurface0C';
-
-      const old = this.three.scene.getObjectByName('isoSurface0C');
+      if (!this.tempCloudWorker.isBinLoaded()) return;
+      // if (!this.isoSurfaceWorker.isIsoPointsActive()) {
+      const old = this.three.scene.getObjectByName('isoSurface0CPoints');
       if (old) this.three.scene.remove(old);
+      // }
+      // if (!this.isoSurfaceWorker.isIsoMeshesActive()) {
+      const oldMesh = this.three.scene.getObjectByName('isoSurface0CMeshes');
+      if (oldMesh) this.three.scene.remove(oldMesh);
+      // }
 
-      this.three.scene.add(points);
+      if (this.isoSurfaceWorker.isIsoPointsActive() || this.isoSurfaceWorker.isIsoMeshesActive()) {
+        const data = this.tempCloudWorker['data']()!;
+        const nx = this.tempCloudWorker.nx()!;
+        const ny = this.tempCloudWorker.ny()!;
+        const nz = this.tempCloudWorker.nz()!;
+
+        const idx = (x: number, y: number, z: number) =>
+          this.tempCloudWorker['idx'](this.dataConnector.selectedFrame(), x, y, z);
+
+        const positions = this.isoSurfaceWorker.buildZeroCrossingPoints(
+          data,
+          nx,
+          ny,
+          nz,
+          (x, y, z) => this.tempCloudWorker['idx'](this.dataConnector.selectedFrame(), x, y, z),
+          0
+        );
+
+        const bounds = this.mapWorker.getBounds();
+
+        // Purge old points
+        const old = this.three.scene.getObjectByName('isoSurface0CPoints');
+        if (old) this.three.scene.remove(old);
+
+        if (this.isoSurfaceWorker.isIsoPointsActive()) {
+          const points = this.isoSurfaceWorker.createPointCloud(positions);
+
+          this.isoSurfaceWorker.applyWorldTransformToPoints(points, bounds, TEMP_CHAIN_HEIGHT_M, nx, ny, nz);
+
+          points.name = 'isoSurface0CPoints';
+
+          // const old = this.three.scene.getObjectByName('isoSurface0CPoints');
+          // if (old) this.three.scene.remove(old);
+
+          this.three.scene.add(points);
+        }
+        // Marching cubes
+        // if (this.isoSurfaceWorker.isIsoMeshesActive()) {
+        //   const mesh = this.isoSurfaceWorker.buildIsoSurfaceMesh(data, nx, ny, nz, idx, 0);
+
+        //   this.isoSurfaceWorker.applyWorldTransformToMesh(mesh, bounds, TEMP_CHAIN_HEIGHT_M, nx, ny, nz);
+
+        //   mesh.name = 'isoSurfaceMesh';
+
+        //   const old = this.three.scene.getObjectByName('isoSurfaceMesh');
+        //   if (old) this.three.scene.remove(old);
+
+        //   this.three.scene.add(mesh);
+        // }
+
+        // Purge old mesh
+        const oldMesh = this.three.scene.getObjectByName('isoSurface0CMeshes');
+        if (oldMesh) this.three.scene.remove(oldMesh);
+
+        if (this.isoSurfaceWorker.isIsoMeshesActive()) {
+          const min = this.temperatureControl.minTemp();
+          const max = this.temperatureControl.maxTemp();
+
+          const idxFn = (x: number, y: number, z: number) =>
+            this.tempCloudWorker['idx'](this.dataConnector.selectedFrame(), x, y, z);
+
+          const mesh = this.isoSurfaceWorker.buildMarchingCubes(data, nx, ny, nz, idxFn, min, max, 0);
+          this.isoSurfaceWorker.applyWorldTransformToMesh(mesh, bounds, TEMP_CHAIN_HEIGHT_M, 120);
+          mesh.name = 'isoSurface0CMeshes';
+
+          // const oldMesh = this.three.scene.getObjectByName('isoSurface0CMeshes');
+          // if (oldMesh) this.three.scene.remove(oldMesh);
+          this.three.scene.add(mesh);
+        }
+      }
     });
   }
 

@@ -2,6 +2,12 @@
 <div class="wrapper">
   <div class="panel">
     <div>
+      <input id="ui-showSlices" type="checkbox" [(ngModel)]="showSlices" />
+      <label for="showSlices">Отображать срезы</label>
+    </div>
+  </div>
+  <div class="panel">
+    <div>
       <label for="floorNum">Кол-во этажей</label>
       <input name="floorNum" type="number" min="1" max="99" [(ngModel)]="floorNum" />
     </div>
@@ -76,6 +82,15 @@
     </div>
     <div>
       <button (click)="toggleIsoMeshes()">Плоскости</button>
+    </div>
+  </div>
+  Сваи
+  <div class="panel">
+    <div>
+      <button (click)="selectAllPiles()">Выделить все</button>
+    </div>
+    <div>
+      <button (click)="clearAllPiles()">Снять выделение</button>
     </div>
   </div>
 </div>

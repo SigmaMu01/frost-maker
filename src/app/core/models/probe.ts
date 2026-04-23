@@ -1,3 +1,5 @@
+import { FabricObject } from 'fabric';
+
 export interface TempProbe {
   depth: number;
   temp: number;
@@ -17,3 +19,9 @@ export interface TempProbeFabric {
     z: number;
   };
 }
+
+export type PileSelection = {
+  id: string; // stable (pile_0, pile_1…)
+  order: number; // dynamic (1..n)
+  object: FabricObject;
+};

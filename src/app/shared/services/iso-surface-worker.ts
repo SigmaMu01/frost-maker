@@ -6,7 +6,7 @@ import { PX_PER_M, TEMP_CHAIN_HEIGHT_M } from './building-manager';
 @Injectable({ providedIn: 'root' })
 export class IsoSurfaceWorker {
   readonly isIsoPointsActive = signal(true);
-  readonly isIsoMeshesActive = signal(true);
+  readonly isIsoMeshesActive = signal(false);
 
   private marching?: MarchingCubes;
 
@@ -156,121 +156,6 @@ export class IsoSurfaceWorker {
     return new THREE.Points(geometry, material);
   }
 
-  buildIsoPoints(
-    data: Float32Array,
-    nx: number,
-    ny: number,
-    nz: number,
-    idx: (x: number, y: number, z: number) => number,
-    isoTemp: number,
-    epsilon = 0.2 // tolerance band
-  ): THREE.Points {
-    const positions: number[] = [];
-
-    for (let z = 0; z < nz; z++) {
-      for (let y = 0; y < ny; y++) {
-        for (let x = 0; x < nx; x++) {
-          const value = data[idx(x, y, z)];
-
-          const v = value;
-          const vx = data[idx(Math.min(x + 1, nx - 1), y, z)];
-          const vy = data[idx(x, Math.min(y + 1, ny - 1), z)];
-          const vz = data[idx(x, y, Math.min(z + 1, nz - 1))];
-
-          const crosses =
-            (v - isoTemp) * (vx - isoTemp) < 0 ||
-            (v - isoTemp) * (vy - isoTemp) < 0 ||
-            (v - isoTemp) * (vz - isoTemp) < 0;
-
-          if (crosses) {
-            // if (Math.abs(value - isoTemp) < epsilon) {
-            positions.push(x, z, y); // NOTE axis swap (see below)
-          }
-        }
-      }
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-    const material = new THREE.PointsMaterial({
-      size: 0.15,
-      color: 0x00ffff,
-      transparent: false,
-      opacity: 1,
-      // depthWrite: false,
-    });
-
-    return new THREE.Points(geometry, material);
-  }
-
-  applyPointCloudTransform(
-    points: THREE.Points,
-    bounds: { x: number; y: number },
-    height: number,
-    nx: number,
-    ny: number,
-    nz: number
-  ) {
-    points.scale.set(bounds.x / PX_PER_M / (nx - 1), height / (1 - nz), bounds.y / PX_PER_M / (ny - 1));
-
-    // flip vertical axis
-    points.scale.y *= -1;
-
-    points.position.set(0, -TEMP_CHAIN_HEIGHT_M, 0);
-  }
-
-  // updateIsosurface(
-  //   data: Float32Array,
-  //   nx: number,
-  //   ny: number,
-  //   nz: number,
-  //   idx: (x: number, y: number, z: number) => number,
-  //   minTemp: number,
-  //   maxTemp: number,
-  //   isoTemp = 0
-  // ): THREE.Mesh {
-  //   // const resolution = Math.max(nx, ny, nz);
-  //   const resolution = 120;
-
-  //   if (!this.marching) {
-  //     this.marching = new MarchingCubes(resolution, this.material, true, true, 100000);
-  //     this.marching.enableUvs = false;
-  //     this.marching.enableColors = false;
-  //   }
-
-  //   const mc = this.marching;
-
-  //   mc.reset();
-
-  //   const range = maxTemp - minTemp || 1;
-  //   const isoLevel = (isoTemp - minTemp) / range;
-
-  //   const size = resolution;
-  //   const field = mc.field;
-
-  //   for (let z = 0; z < size; z++) {
-  //     for (let y = 0; y < size; y++) {
-  //       for (let x = 0; x < size; x++) {
-  //         const fx = (x / (size - 1)) * (nx - 1);
-  //         const fy = (y / (size - 1)) * (ny - 1);
-  //         const fz = (z / (size - 1)) * (nz - 1);
-
-  //         const value = this.sampleField(data, nx, ny, nz, idx, fx, fy, fz);
-
-  //         const density = (value - minTemp) / range;
-
-  //         field[x + y * size + z * size * size] = density;
-  //       }
-  //     }
-  //   }
-
-  //   mc.isolation = isoLevel;
-  //   mc.update();
-
-  //   return mc;
-  // }
-
   applyWorldTransformToPoints(
     points: THREE.Points,
     bounds: { x: number; y: number },
@@ -299,80 +184,180 @@ export class IsoSurfaceWorker {
     points.rotation.x = Math.PI / 2;
   }
 
-  // applyWorldTransform(
-  //   mesh: THREE.Mesh,
+  // buildIsoSurfaceMesh(
+  //   data: Float32Array,
+  //   nx: number,
+  //   ny: number,
+  //   nz: number,
+  //   idx: (x: number, y: number, z: number) => number,
+  //   iso = 0
+  // ): THREE.Mesh {
+  //   const resolution = Math.max(nx, ny, nz);
+
+  //   // Create marching cubes volume
+  //   const mc = new MarchingCubes(resolution, this.material, true, true);
+
+  //   mc.isolation = iso;
+
+  //   // IMPORTANT: we fill scalar field manually
+  //   const field = mc.field;
+  //   field.fill(0);
+
+  //   // Map your non-cubic grid → cubic MC grid
+  //   for (let z = 0; z < resolution; z++) {
+  //     for (let y = 0; y < resolution; y++) {
+  //       for (let x = 0; x < resolution; x++) {
+  //         const gx = Math.floor((x / (resolution - 1)) * (nx - 1));
+  //         const gy = Math.floor((y / (resolution - 1)) * (ny - 1));
+  //         const gz = Math.floor((z / (resolution - 1)) * (nz - 1));
+
+  //         const value = data[idx(gx, gy, gz)];
+
+  //         const id = x + y * resolution + z * resolution * resolution;
+
+  //         field[id] = value;
+  //       }
+  //     }
+  //   }
+
+  //   mc.enableUvs = false;
+  //   mc.enableColors = false;
+
+  //   mc.update();
+
+  //   return mc;
+  // }
+
+  // applyWorldTransformToMesh(
+  //   mesh: THREE.Object3D,
   //   bounds: { x: number; y: number },
   //   height: number,
   //   nx: number,
   //   ny: number,
   //   nz: number
   // ) {
-  //   mesh.scale.set(bounds.x / PX_PER_M / 2, bounds.y / PX_PER_M / 2, (-1 * height) / 2);
+  //   // const scaleX = bounds.x / PX_PER_M / (nx - 1);
+  //   // const scaleY = bounds.y / PX_PER_M / (ny - 1);
+  //   // const scaleZ = -height / (nz - 1);
+  //   const scaleX = bounds.x / PX_PER_M / 2;
+  //   const scaleY = bounds.y / PX_PER_M / 2;
+  //   const scaleZ = -height / 2;
+
+  //   mesh.scale.set(scaleX, scaleY, scaleZ);
+
+  //   // mesh.position.set(0, -height, 0);
+  //   mesh.position.set(scaleX, -1 + scaleZ, scaleY);
+
   //   mesh.rotation.x = Math.PI / 2;
-  //   mesh.position.set(bounds.x / 2 / PX_PER_M, (-1 * height) / 2, bounds.y / 2 / PX_PER_M);
   // }
 
-  // private sampleField(
-  //   data: Float32Array,
-  //   nx: number,
-  //   ny: number,
-  //   nz: number,
-  //   idx: (x: number, y: number, z: number) => number,
-  //   fx: number,
-  //   fy: number,
-  //   fz: number
-  // ) {
-  //   const x0 = Math.floor(fx),
-  //     x1 = Math.min(x0 + 1, nx - 1);
-  //   const y0 = Math.floor(fy),
-  //     y1 = Math.min(y0 + 1, ny - 1);
-  //   const z0 = Math.floor(fz),
-  //     z1 = Math.min(z0 + 1, nz - 1);
+  buildMarchingCubes(
+    data: Float32Array,
+    nx: number,
+    ny: number,
+    nz: number,
+    idx: (x: number, y: number, z: number) => number,
+    minTemp: number,
+    maxTemp: number,
+    isoTemp = 0,
+    resolution = 120
+  ): THREE.Mesh {
+    if (!this.marching) {
+      this.marching = new MarchingCubes(resolution, this.material, true, true, 200000);
+      this.marching.enableUvs = false;
+      this.marching.enableColors = false;
+    }
 
-  //   const tx = fx - x0;
-  //   const ty = fy - y0;
-  //   const tz = fz - z0;
+    const mc = this.marching;
+    mc.reset();
 
-  //   const c000 = data[idx(x0, y0, z0)];
-  //   const c100 = data[idx(x1, y0, z0)];
-  //   const c010 = data[idx(x0, y1, z0)];
-  //   const c110 = data[idx(x1, y1, z0)];
+    const range = maxTemp - minTemp || 1;
+    const isoLevel = (isoTemp - minTemp) / range;
+    const size = resolution;
+    const field = mc.field;
 
-  //   const c001 = data[idx(x0, y0, z1)];
-  //   const c101 = data[idx(x1, y0, z1)];
-  //   const c011 = data[idx(x0, y1, z1)];
-  //   const c111 = data[idx(x1, y1, z1)];
+    for (let mz = 0; mz < size; mz++) {
+      for (let my = 0; my < size; my++) {
+        for (let mx = 0; mx < size; mx++) {
+          const fx = (mx / (size - 1)) * (nx - 1);
+          const fy = (my / (size - 1)) * (ny - 1);
+          const fz = (mz / (size - 1)) * (nz - 1);
 
-  //   const c00 = c000 * (1 - tx) + c100 * tx;
-  //   const c10 = c010 * (1 - tx) + c110 * tx;
-  //   const c01 = c001 * (1 - tx) + c101 * tx;
-  //   const c11 = c011 * (1 - tx) + c111 * tx;
+          const value = this.sampleField(data, nx, ny, nz, idx, fx, fy, fz);
+          const density = (value - minTemp) / range;
 
-  //   const c0 = c00 * (1 - ty) + c10 * ty;
-  //   const c1 = c01 * (1 - ty) + c11 * ty;
+          field[mx + my * size + mz * size * size] = density;
+        }
+      }
+    }
 
-  //   return c0 * (1 - tz) + c1 * tz;
-  // }
+    mc.isolation = isoLevel;
+    mc.update();
 
-  // createDebugBox(bounds: { x: number; y: number }, height: number) {
-  //   const geometry = new THREE.BoxGeometry(bounds.x / PX_PER_M, height, bounds.y / PX_PER_M);
+    return mc;
+  }
 
-  //   const material = new THREE.MeshBasicMaterial({
-  //     color: 0x00ff00,
-  //     transparent: true,
-  //     opacity: 0.15,
-  //     wireframe: false,
-  //   });
+  private sampleField(
+    data: Float32Array,
+    nx: number,
+    ny: number,
+    nz: number,
+    idx: (x: number, y: number, z: number) => number,
+    fx: number,
+    fy: number,
+    fz: number
+  ): number {
+    const x0 = Math.floor(fx),
+      x1 = Math.min(x0 + 1, nx - 1);
+    const y0 = Math.floor(fy),
+      y1 = Math.min(y0 + 1, ny - 1);
+    const z0 = Math.floor(fz),
+      z1 = Math.min(z0 + 1, nz - 1);
 
-  //   const box = new THREE.Mesh(geometry, material);
+    const tx = fx - x0,
+      ty = fy - y0,
+      tz = fz - z0;
 
-  //   // CRITICAL: same convention as building
-  //   box.position.set(bounds.x / PX_PER_M / 2, height / -2, bounds.y / PX_PER_M / 2);
+    const c000 = data[idx(x0, y0, z0)];
+    const c100 = data[idx(x1, y0, z0)];
+    const c010 = data[idx(x0, y1, z0)];
+    const c110 = data[idx(x1, y1, z0)];
 
-  //   box.name = 'debugVolume';
+    const c001 = data[idx(x0, y0, z1)];
+    const c101 = data[idx(x1, y0, z1)];
+    const c011 = data[idx(x0, y1, z1)];
+    const c111 = data[idx(x1, y1, z1)];
 
-  //   return box;
-  // }
+    const c00 = c000 * (1 - tx) + c100 * tx;
+    const c10 = c010 * (1 - tx) + c110 * tx;
+    const c01 = c001 * (1 - tx) + c101 * tx;
+    const c11 = c011 * (1 - tx) + c111 * tx;
+
+    const c0 = c00 * (1 - ty) + c10 * ty;
+    const c1 = c01 * (1 - ty) + c11 * ty;
+
+    return c0 * (1 - tz) + c1 * tz;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // TRANSFORM — now identical logic for points AND marching cubes
+  // (this is why the mesh was too small before — the resolution factor was missing)
+  // ──────────────────────────────────────────────────────────────
+  applyWorldTransformToMesh(
+    mesh: THREE.Mesh,
+    bounds: { x: number; y: number },
+    height: number,
+    resolution: number // marching-cubes internal resolution
+  ) {
+    // Same physical size as the point cloud (100 px/m → 12 m depth)
+    const scaleX = bounds.x / PX_PER_M;
+    const scaleY = bounds.y / PX_PER_M;
+    const scaleZ = -height;
+
+    mesh.scale.set(scaleX, scaleY, scaleZ);
+    mesh.rotation.x = Math.PI / 2;
+    mesh.position.set(0, -height, 0);
+  }
 
   // dispose() {
   //   if (this.marching) {

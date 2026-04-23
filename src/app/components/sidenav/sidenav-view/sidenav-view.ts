@@ -8,6 +8,7 @@ import { TempCloudWorker } from '../../../shared/services/temp-cloud-worker';
 import { TempProber } from '../../temp-probe/temp-prober';
 import { toggleFlag } from '../../../core/utils/toggler';
 import { IsoSurfaceWorker } from '../../../shared/services/iso-surface-worker';
+import { PileManager } from '../../../shared/services/pile-manager';
 
 @Component({
   selector: 'app-sidenav-view',
@@ -22,9 +23,11 @@ export class SidenavView {
   private readonly windowSwitch = inject(WindowSwitch);
   private readonly tempProber = inject(TempProber);
   private readonly isoSurfaceWorker = inject(IsoSurfaceWorker);
+  private readonly pileManager = inject(PileManager);
   readonly tempCloudWorker = inject(TempCloudWorker);
 
   readonly isSubmenuOpen = input(false);
+  readonly showSlices = model<boolean>(true);
   readonly floorNum = model<number>(5);
   readonly fieldOfViewValue = model<number>(60);
   readonly sliceValue = this.tempCloudWorker.sliceIndex.bind(this.tempCloudWorker);
@@ -49,6 +52,11 @@ export class SidenavView {
     effect(() => {
       const fov = this.fieldOfViewValue();
       this.cameraControl.fov.set(fov);
+    });
+
+    effect(() => {
+      const show = this.showSlices();
+      this.tempCloudWorker.showSlices.set(show);
     });
 
     // effect(() => {
@@ -95,6 +103,14 @@ export class SidenavView {
 
   toggleIsoMeshes() {
     toggleFlag(this.isoSurfaceWorker.isIsoMeshesActive);
+  }
+
+  selectAllPiles() {
+    this.pileManager.selectAllPiles();
+  }
+
+  clearAllPiles() {
+    this.pileManager.clearSelection();
   }
 
   centerOnObject() {

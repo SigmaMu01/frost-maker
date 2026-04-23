@@ -18,6 +18,7 @@ import { DataConnector } from '../../shared/services/data-connector';
 import { TempCloudWorker } from '../../shared/services/temp-cloud-worker';
 import { TemperatureControl } from '../../shared/services/temperature-control';
 import { TempProber } from '../../components/temp-probe/temp-prober';
+import { PileManager } from '../../shared/services/pile-manager';
 
 interface FabricObjectWithID extends FabricObject {
   id?: string;
@@ -36,6 +37,7 @@ export class Grid implements AfterViewInit {
   private readonly tempCloudWorker = inject(TempCloudWorker);
   // private readonly temperatureControl = inject(TemperatureControl);
   private readonly tempProber = inject(TempProber);
+  private readonly pileManager = inject(PileManager);
 
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('fabricCanvas');
   containerRef = viewChild.required<ElementRef<HTMLDivElement>>('fabricContainer');
@@ -88,7 +90,7 @@ export class Grid implements AfterViewInit {
   // ----------------------
   private initCanvas() {
     this.canvas = new Canvas(this.canvasRef().nativeElement, {
-      selection: true,
+      selection: false,
       preserveObjectStacking: true,
       fireRightClick: true,
       stopContextMenu: true,
@@ -132,7 +134,7 @@ export class Grid implements AfterViewInit {
           break;
 
         case 'support':
-          this.gridDraw.drawSupports(this.canvas, node);
+          this.gridDraw.drawPiles(this.canvas, node);
           break;
 
         default:
@@ -172,31 +174,7 @@ export class Grid implements AfterViewInit {
   private onMouseMove = (opt: TPointerEventInfo<MouseEvent>) => {
     const evt = opt.e;
 
-    if (!this.isPanning) {
-      // If mouse hovering
-      if (!this.tempCloudWorker.isBinLoaded()) return;
-      const world = this.getWorldPoint(evt);
-
-      // Show temperature probe overlay only if inside the slice
-      const inside = this.tempCloudWorker.isInsideSlice(world.x, world.y);
-      if (!inside) {
-        this.tempProber.isProbeVisible.set(false);
-        return;
-      }
-
-      const result = this.tempCloudWorker.getValueAt(world.x, world.y);
-
-      const rect = this.canvas.getElement().getBoundingClientRect();
-
-      this.tempProber.probe.set({
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top,
-        temp: result.value,
-        coords: result,
-      });
-
-      this.tempProber.isProbeVisible.set(true);
-    } else {
+    if (this.isPanning) {
       // If mouse panning
 
       const vpt = this.canvas.viewportTransform!;
@@ -209,6 +187,31 @@ export class Grid implements AfterViewInit {
       this.lastPosX = evt.clientX;
       this.lastPosY = evt.clientY;
     }
+    // if (!this.isPanning) {
+    // If mouse hovering
+    if (!this.tempCloudWorker.isBinLoaded()) return;
+    const world = this.getWorldPoint(evt);
+
+    // Show temperature probe overlay only if inside the slice
+    const inside = this.tempCloudWorker.isInsideSlice(world.x, world.y);
+    if (!inside) {
+      this.hideProbe();
+      return;
+    }
+
+    const result = this.tempCloudWorker.getValueAt(world.x, world.y);
+
+    const rect = this.canvas.getElement().getBoundingClientRect();
+
+    this.tempProber.probe.set({
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+      temp: result.value,
+      coords: result,
+    });
+
+    this.tempProber.isProbeVisible.set(true);
+    // }
   };
 
   private onMouseUp = () => {
@@ -238,11 +241,22 @@ export class Grid implements AfterViewInit {
 
   private onSelection(e: Partial<TEvent<TPointerEvent>> & { selected?: FabricObjectWithID[] }) {
     const selected = e.selected?.[0];
-    if (!selected?.id) return;
-    // if (!this.dataConnector.checkTempChainData(selected.id)) return;
+    if (!selected) return;
 
-    // Save current selected temperature chain to service
-    this.mapWorker.setSelectedObjectId(selected!.id!);
+    switch ((selected as any).customType) {
+      case 'pile': {
+        this.pileManager.togglePileSelection(selected);
+        this.canvas.discardActiveObject(); // Prevent Fabric default behavior
+        break;
+      }
+      case 'temp': {
+        this.mapWorker.setSelectedObjectId(selected!.id!);
+        break;
+      }
+      // default: {
+      //   this.onSelectionCleared();
+      // }
+    }
   }
 
   private onSelectionCleared() {

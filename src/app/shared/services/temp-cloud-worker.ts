@@ -33,6 +33,7 @@ export class TempCloudWorker {
   readonly currentSlice = signal<binary3DCloudData>({} as binary3DCloudData);
 
   readonly isBinLoaded = signal(false);
+  readonly showSlices = signal(true); // Show temperature slices on Grid
 
   private debugEnabled = false;
 
@@ -59,6 +60,11 @@ export class TempCloudWorker {
 
       if (!this.isBinLoaded() || !this.mapWorker.isSVGRendered() || !this.dataConnector.isJSONLoaded()) return;
       untracked(() => this.drawTemperatureSlice());
+    });
+
+    effect(() => {
+      const visible = this.showSlices();
+      if (this.isBinLoaded()) this.setTemperatureSliceVisible(visible);
     });
   }
 
@@ -158,6 +164,20 @@ export class TempCloudWorker {
 
     this.updateOrCreateImage(imgData, scaleX, scaleY);
     this.drawAxes(width, height, scaleX, scaleY);
+  }
+
+  setTemperatureSliceVisible(visible: boolean) {
+    const canvas = this.mapWorker.getCanvas();
+
+    if (this.tempImage) {
+      this.tempImage.set('visible', visible);
+    }
+
+    if (this.mapWorker.isAxesVisible()) {
+      this.axesObjects.forEach((obj) => obj.set('visible', visible));
+    }
+
+    canvas.requestRenderAll();
   }
 
   private updateOrCreateImage(imageData: ImageData, scaleX: number, scaleY: number) {

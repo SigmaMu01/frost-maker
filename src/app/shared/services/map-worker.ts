@@ -1,8 +1,15 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal, untracked } from '@angular/core';
 import { INode } from 'svgson';
 import { isValidSVG } from '../../core/models/building';
 import { Canvas, FabricObject, Group, Line } from 'fabric';
 import { PX_PER_M } from './building-manager';
+import { PileSelection } from '../../core/models/probe';
+
+type Node = {
+  id: string;
+  x: number;
+  y: number;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +22,7 @@ export class MapWorker {
 
   // Layers
   buildingObjects: FabricObject[] = [];
+  pileObjects: FabricObject[] = [];
   tempObjects: FabricObject[] = [];
   gridObjects: FabricObject[] = [];
   axesObjects: FabricObject[] = [];
@@ -22,6 +30,8 @@ export class MapWorker {
   readonly selectedTempChainId = signal<string | null>(null); // Selected temperature chain
   readonly isSVGLoaded = signal(false); // Signal to the canvas that it can draw building from the file
   readonly isSVGRendered = signal(false); // Signal to allow the slice to draw if loaded in the wrong order
+
+  readonly isAxesVisible = signal(true);
 
   readonly getCanvas = computed(() => this.canvas);
   readonly getContainer = computed(() => this.container);
@@ -74,6 +84,7 @@ export class MapWorker {
   setBuildingVisible(visible: boolean) {
     // Control building visibility on the canvas
     this.buildingObjects.forEach((obj) => (obj.visible = visible));
+    this.pileObjects.forEach((obj) => (obj.visible = visible));
     this.canvas.requestRenderAll();
   }
 
@@ -113,8 +124,10 @@ export class MapWorker {
 
   toggleAxes(visibility?: boolean) {
     if (visibility) {
+      untracked(() => this.isAxesVisible.set(visibility));
       this.axesObjects.forEach((obj) => (obj.visible = visibility));
     } else {
+      untracked(() => this.isAxesVisible.update((v) => !v));
       this.axesObjects.forEach((obj) => (obj.visible = !obj.visible));
     }
     this.canvas.requestRenderAll();
